@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29728.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Nager.CertificateManagement", "Nager.CertificateManagement\Nager.CertificateManagement.csproj", "{6F13A136-10CC-46C4-9B6A-570AAA78AFB0}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{6F13A136-10CC-46C4-9B6A-570AAA78AFB0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6F13A136-10CC-46C4-9B6A-570AAA78AFB0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6F13A136-10CC-46C4-9B6A-570AAA78AFB0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6F13A136-10CC-46C4-9B6A-570AAA78AFB0}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A2D4EBD6-6DEF-482A-B076-4E8EB3F07D9B}
+	EndGlobalSection
+EndGlobal
