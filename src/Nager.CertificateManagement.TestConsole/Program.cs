@@ -1,4 +1,6 @@
-﻿using System;
+﻿using Nager.CertificateManagement.Library;
+using Nager.CertificateManagement.Library.DnsProvider;
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -28,7 +30,7 @@ namespace Nager.CertificateManagement
 
             IDnsProvider dnsProvider = new HetznerDnsProvider("HetznerDnsApiKey");
 
-            var certificateManagement = new CertificateManagement(dnsProvider, myAcmeEmailAddress, certificateSigningInfo, CertificateRequestMode.Test);
+            var certificateManagement = new CertificateProcessor(dnsProvider, myAcmeEmailAddress, certificateSigningInfo, CertificateRequestMode.Test);
             certificateManagement.ProcessAsync(domains).GetAwaiter().GetResult();
         }
 

@@ -1,22 +1,23 @@
 ﻿using Certes;
 using Certes.Acme;
 using DnsClient;
+using Nager.CertificateManagement.Library.DnsProvider;
 using System;
 using System.IO;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nager.CertificateManagement
+namespace Nager.CertificateManagement.Library
 {
-    public class CertificateManagement
+    public class CertificateProcessor
     {
         private readonly string _acmeKeyFile = "acme-account-test.pem";
         private readonly Uri _acmeDirectoryUri = WellKnownServers.LetsEncryptStagingV2;
         private readonly IDnsProvider _dnsProvider;
         private readonly CertificateSigningInfo _certificateSigningInfo;
 
-        public CertificateManagement(
+        public CertificateProcessor(
             IDnsProvider dnsProvider,
             string acmeAccountEmail,
             CertificateSigningInfo certificateSigningInfo,
@@ -40,7 +41,7 @@ namespace Nager.CertificateManagement
             }
         }
 
-        public async Task ProcessAsync(string[] domains, CancellationToken cancellationToken = default)
+        public async Task<bool> ProcessAsync(string[] domains, CancellationToken cancellationToken = default)
         {
             var accountPemKey = await File.ReadAllTextAsync(this._acmeKeyFile, cancellationToken);
             var acme = new AcmeContext(this._acmeDirectoryUri, KeyFactory.FromPem(accountPemKey));
@@ -58,7 +59,10 @@ namespace Nager.CertificateManagement
                 var dnsChallenge = await authorization.Dns();
                 var acmeToken = acme.AccountKey.DnsTxt(dnsChallenge.Token);
 
-                await this._dnsProvider.CreateAcmeChallengeRecordAsync(cleanDomain, acmeToken, cancellationToken);
+                if (!await this._dnsProvider.CreateAcmeChallengeRecordAsync(cleanDomain, acmeToken, cancellationToken))
+                {
+                    return false;
+                }
 
                 var dnsClient = new LookupClient(new LookupClientOptions(NameServer.GooglePublicDns, NameServer.GooglePublicDns2) { UseCache = false });
                 for (var i = 0; i < 60; i++)
@@ -95,7 +99,10 @@ namespace Nager.CertificateManagement
                 await File.WriteAllTextAsync($"{cleanDomain}/key.pem", privateKey.ToPem(), cancellationToken);
 
                 await this._dnsProvider.RemoveAcmeChallengeRecordAsync(cleanDomain, cancellationToken);
+
             }
+
+            return true;
         }
     }
 }

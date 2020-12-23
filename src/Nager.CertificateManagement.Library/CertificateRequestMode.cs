@@ -1,4 +1,4 @@
-﻿namespace Nager.CertificateManagement
+﻿namespace Nager.CertificateManagement.Library
 {
     public enum CertificateRequestMode
     {

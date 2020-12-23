@@ -1,7 +1,7 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nager.CertificateManagement
+namespace Nager.CertificateManagement.Library.DnsProvider
 {
     public interface IDnsProvider
     {

@@ -1,11 +1,12 @@
 ﻿using Nager.HetznerDns;
+using Nager.HetznerDns.Models;
 using Nager.PublicSuffix;
 using System;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nager.CertificateManagement
+namespace Nager.CertificateManagement.Library.DnsProvider
 {
     public class HetznerDnsProvider : IDnsProvider
     {
@@ -44,7 +45,7 @@ namespace Nager.CertificateManagement
             var createRecord = new Nager.HetznerDns.Models.CreateRecord
             {
                 ZoneId = zone.Id,
-                Type = "TXT",
+                Type = DnsRecordType.TXT,
                 Name = $"_acme-challenge.{domainName.SubDomain}",
                 Value = acmeToken,
                 Ttl = 0
@@ -74,7 +75,7 @@ namespace Nager.CertificateManagement
             var recordResponse = await this._dnsClient.GetRecordsAsync(zone.Id, cancellationToken);
             var records = recordResponse.Records.Where(record => 
                 record.Name.Equals($"_acme-challenge.{domainName.SubDomain}", StringComparison.OrdinalIgnoreCase) && 
-                record.Type.Equals("TXT", StringComparison.OrdinalIgnoreCase));
+                record.Type == DnsRecordType.TXT);
 
             if (records == null)
             {
