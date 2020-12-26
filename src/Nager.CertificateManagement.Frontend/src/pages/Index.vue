@@ -26,15 +26,13 @@ export default {
   methods: {
     async create () {
       try {
-        await this.$axios.post('/api/Certificate/', { })
-        // await update(this.id, this.item)
+        await this.$axios.post('/api/Certificate', { fqdn: this.fqdn })
         this.$emit('afterSubmit')
       } catch (error) {
-        this.errors = error.response.data.errors
         this.$q.notify({
           type: 'negative',
-          message: 'Validation failure',
-          caption: 'please check the inputs'
+          message: 'Request failure',
+          caption: `${error}`
         })
       }
     }

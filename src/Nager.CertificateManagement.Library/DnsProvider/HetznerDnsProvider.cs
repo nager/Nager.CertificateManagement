@@ -25,12 +25,7 @@ namespace Nager.CertificateManagement.Library.DnsProvider
             return response.Zones.Select(zone => zone.Name).ToArray();
         }
 
-        /// <summary>
-        /// Create AcmeChallenge Record
-        /// </summary>
-        /// <param name="fqdn">Fully Qualified Domain Name</param>
-        /// <param name="acmeToken">ACME Token</param>
-        /// <returns></returns>
+        ///<inheritdoc/>
         public async Task<bool> CreateAcmeChallengeRecordAsync(string fqdn, string acmeToken, CancellationToken cancellationToken = default)
         {
             var domainName = this._domainParser.Get(fqdn);
@@ -42,7 +37,7 @@ namespace Nager.CertificateManagement.Library.DnsProvider
                 return false;
             }
 
-            var createRecord = new Nager.HetznerDns.Models.CreateRecord
+            var createRecord = new CreateRecord
             {
                 ZoneId = zone.Id,
                 Type = DnsRecordType.TXT,
@@ -56,11 +51,7 @@ namespace Nager.CertificateManagement.Library.DnsProvider
             return true;
         }
 
-        /// <summary>
-        /// Remove AcmeChallenge Record
-        /// </summary>
-        /// <param name="fqdn">Fully Qualified Domain Name</param>
-        /// <returns></returns>
+        ///<inheritdoc/>
         public async Task<bool> RemoveAcmeChallengeRecordAsync(string fqdn, CancellationToken cancellationToken = default)
         {
             var domainName = this._domainParser.Get(fqdn);

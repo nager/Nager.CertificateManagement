@@ -4,6 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nager.CertificateManagement.Library;
 using Nager.CertificateManagement.Library.DnsProvider;
+using Nager.CertificateManagement.WebApi.Models;
+using Nager.PublicSuffix;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -29,7 +32,7 @@ namespace Nager.CertificateManagement.WebApi.Controllers
 
         [HttpPost]
         public async Task<ActionResult> RequestAsync(
-            string fqdn,
+            [FromBody] CertificateRequest certificateRequest,
             CancellationToken cancellationToken = default)
         {
             var certificateSigningInfo = new CertificateSigningInfo
@@ -41,9 +44,19 @@ namespace Nager.CertificateManagement.WebApi.Controllers
                 OrganizationUnit = "Dev"
             };
 
-            var certificateProcessor = new CertificateProcessor(this._dnsProvider, this._configuration["email"], certificateSigningInfo, CertificateRequestMode.Test);
-            var successful = await certificateProcessor.ProcessAsync(new string[] { fqdn }, cancellationToken);
+            var domainParser = new DomainParser(new WebTldRuleProvider());
 
+            var allowedDomains = await this._dnsProvider.GetManagedDomainsAsync(cancellationToken);
+            var domainInfo = domainParser.Get(certificateRequest.Fqdn);
+            if (!allowedDomains.Contains(domainInfo.RegistrableDomain))
+            {
+                this.ModelState.AddModelError(nameof(certificateRequest.Fqdn), "Domain is not supported by provider");
+                return StatusCode(StatusCodes.Status422UnprocessableEntity, this.ModelState);
+            }
+
+            var certificateProcessor = new CertificateProcessor(this._dnsProvider, this._configuration["email"], certificateSigningInfo, CertificateRequestMode.Test);
+
+            var successful = await certificateProcessor.ProcessAsync(new string[] { certificateRequest.Fqdn }, cancellationToken);
             if (successful)
             {
                 return StatusCode(StatusCodes.Status200OK);
