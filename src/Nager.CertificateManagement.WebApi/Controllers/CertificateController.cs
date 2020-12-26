@@ -32,7 +32,7 @@ namespace Nager.CertificateManagement.WebApi.Controllers
 
         [HttpPost]
         public async Task<ActionResult> RequestAsync(
-            [FromBody] CertificateRequest certificateRequest,
+            [FromBody] CertificateRequestDto certificateRequest,
             CancellationToken cancellationToken = default)
         {
             var certificateSigningInfo = new CertificateSigningInfo
