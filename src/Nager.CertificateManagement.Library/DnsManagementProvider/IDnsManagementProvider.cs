@@ -1,9 +1,9 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nager.CertificateManagement.Library.DnsProvider
+namespace Nager.CertificateManagement.Library.DnsManagementProvider
 {
-    public interface IDnsProvider
+    public interface IDnsManagementProvider
     {
         Task<string[]> GetManagedDomainsAsync(CancellationToken cancellationToken = default);
         /// <summary>
@@ -13,6 +13,7 @@ namespace Nager.CertificateManagement.Library.DnsProvider
         /// <param name="acmeToken">ACME Token</param>
         /// <returns></returns>
         Task<bool> CreateAcmeChallengeRecordAsync(string fqdn, string acmeToken, CancellationToken cancellationToken = default);
+
         /// <summary>
         /// Remove AcmeChallenge Record
         /// </summary>

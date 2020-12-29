@@ -6,14 +6,14 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Nager.CertificateManagement.Library.DnsProvider
+namespace Nager.CertificateManagement.Library.DnsManagementProvider
 {
-    public class HetznerDnsProvider : IDnsProvider
+    public class HetznerDnsManagementProvider : IDnsManagementProvider
     {
         private readonly HetznerDnsClient _dnsClient;
         private readonly DomainParser _domainParser;
 
-        public HetznerDnsProvider(string apiKey)
+        public HetznerDnsManagementProvider(string apiKey)
         {
             this._domainParser = new DomainParser(new WebTldRuleProvider());
             this._dnsClient = new HetznerDnsClient(apiKey);

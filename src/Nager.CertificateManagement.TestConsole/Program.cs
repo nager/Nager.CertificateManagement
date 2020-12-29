@@ -1,5 +1,6 @@
 ﻿using Nager.CertificateManagement.Library;
-using Nager.CertificateManagement.Library.DnsProvider;
+using Nager.CertificateManagement.Library.DnsManagementProvider;
+using Nager.CertificateManagement.Library.ObjectStorage;
 using System;
 using System.IO;
 using System.Security.Cryptography;
@@ -28,9 +29,16 @@ namespace Nager.CertificateManagement
                 "*.devops.company.com"
             };
 
-            IDnsProvider dnsProvider = new HetznerDnsProvider("HetznerDnsApiKey");
+            IDnsManagementProvider dnsManagementProvider = new HetznerDnsManagementProvider("HetznerDnsApiKey");
+            IObjectStorage objectStorage = new S3ObjectStorage();
 
-            var certificateManagement = new CertificateProcessor(dnsProvider, myAcmeEmailAddress, certificateSigningInfo, CertificateRequestMode.Test);
+            var certificateManagement = new CertificateProcessor(
+                dnsManagementProvider,
+                objectStorage,
+                myAcmeEmailAddress,
+                certificateSigningInfo,
+                CertificateRequestMode.Test);
+
             certificateManagement.ProcessAsync(domains).GetAwaiter().GetResult();
         }
 

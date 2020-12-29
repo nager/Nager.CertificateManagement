@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Nager.CertificateManagement.Library;
-using Nager.CertificateManagement.Library.DnsProvider;
+using Nager.CertificateManagement.Library.DnsManagementProvider;
+using Nager.CertificateManagement.Library.ObjectStorage;
 using Nager.CertificateManagement.WebApi.Models;
 using Nager.PublicSuffix;
 using System.Linq;
@@ -18,16 +19,19 @@ namespace Nager.CertificateManagement.WebApi.Controllers
     {
         private readonly ILogger<CertificateController> _logger;
         private readonly IConfiguration _configuration;
-        private readonly IDnsProvider _dnsProvider;
+        private readonly IDnsManagementProvider _dnsManagementProvider;
+        private readonly IObjectStorage _objectStorage;
 
         public CertificateController(
             ILogger<CertificateController> logger,
             IConfiguration configuration,
-            IDnsProvider dnsProvider)
+            IDnsManagementProvider dnsManagementProvider,
+            IObjectStorage objectStorage)
         {
             this._logger = logger;
             this._configuration = configuration;
-            this._dnsProvider = dnsProvider;
+            this._dnsManagementProvider = dnsManagementProvider;
+            this._objectStorage = objectStorage;
         }
 
         [HttpPost]
@@ -46,7 +50,7 @@ namespace Nager.CertificateManagement.WebApi.Controllers
 
             var domainParser = new DomainParser(new WebTldRuleProvider());
 
-            var allowedDomains = await this._dnsProvider.GetManagedDomainsAsync(cancellationToken);
+            var allowedDomains = await this._dnsManagementProvider.GetManagedDomainsAsync(cancellationToken);
             var domainInfo = domainParser.Get(certificateRequest.Fqdn);
             if (!allowedDomains.Contains(domainInfo.RegistrableDomain))
             {
@@ -54,7 +58,12 @@ namespace Nager.CertificateManagement.WebApi.Controllers
                 return StatusCode(StatusCodes.Status422UnprocessableEntity, this.ModelState);
             }
 
-            var certificateProcessor = new CertificateProcessor(this._dnsProvider, this._configuration["email"], certificateSigningInfo, CertificateRequestMode.Test);
+            var certificateProcessor = new CertificateProcessor(
+                this._dnsManagementProvider,
+                this._objectStorage,
+                this._configuration["email"],
+                certificateSigningInfo,
+                CertificateRequestMode.Test);
 
             var successful = await certificateProcessor.ProcessAsync(new string[] { certificateRequest.Fqdn }, cancellationToken);
             if (successful)

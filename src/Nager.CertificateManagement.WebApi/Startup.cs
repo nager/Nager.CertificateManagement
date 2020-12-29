@@ -4,7 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
-using Nager.CertificateManagement.Library.DnsProvider;
+using Nager.CertificateManagement.Library.CertificateJobRepository;
+using Nager.CertificateManagement.Library.DnsManagementProvider;
+using Nager.CertificateManagement.Library.ObjectStorage;
 
 namespace Nager.CertificateManagement.WebApi
 {
@@ -20,7 +22,9 @@ namespace Nager.CertificateManagement.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddTransient<IDnsProvider>(provider => new HetznerDnsProvider(Configuration["DnsProvider:Hetzner:ApiKey"]));
+            services.AddSingleton<ICertificateJobRepository, MockCertificateJobRepository>();
+            services.AddTransient<IObjectStorage, S3ObjectStorage>();
+            services.AddTransient<IDnsManagementProvider>(provider => new HetznerDnsManagementProvider(Configuration["DnsProvider:Hetzner:ApiKey"]));
 
             services.AddControllers();
             services.AddSwaggerGen(c =>

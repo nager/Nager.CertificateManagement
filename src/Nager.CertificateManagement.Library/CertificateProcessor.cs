@@ -1,10 +1,12 @@
 ﻿using Certes;
 using Certes.Acme;
 using DnsClient;
-using Nager.CertificateManagement.Library.DnsProvider;
+using Nager.CertificateManagement.Library.DnsManagementProvider;
+using Nager.CertificateManagement.Library.ObjectStorage;
 using System;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,16 +16,20 @@ namespace Nager.CertificateManagement.Library
     {
         private readonly string _acmeKeyFile = "acme-account-test.pem";
         private readonly Uri _acmeDirectoryUri = WellKnownServers.LetsEncryptStagingV2;
-        private readonly IDnsProvider _dnsProvider;
+        private readonly IDnsManagementProvider _dnsManagementProvider;
+        private readonly IObjectStorage _objectStorage;
         private readonly CertificateSigningInfo _certificateSigningInfo;
 
         public CertificateProcessor(
-            IDnsProvider dnsProvider,
+            IDnsManagementProvider dnsManagementProvider,
+            IObjectStorage objectStorage,
             string acmeAccountEmail,
             CertificateSigningInfo certificateSigningInfo,
             CertificateRequestMode certificateRequestMode)
         {
-            this._dnsProvider = dnsProvider;
+            this._dnsManagementProvider = dnsManagementProvider;
+            this._objectStorage = objectStorage;
+
             this._certificateSigningInfo = certificateSigningInfo;
 
             if (certificateRequestMode == CertificateRequestMode.Production)
@@ -32,18 +38,21 @@ namespace Nager.CertificateManagement.Library
                 this._acmeKeyFile = "acme-account-production.pem";
             }
 
-            if (!File.Exists(this._acmeKeyFile))
+            if (!this._objectStorage.FileExistsAsync($"config/{this._acmeKeyFile}").GetAwaiter().GetResult())
             {
                 var acme = new AcmeContext(this._acmeDirectoryUri);
                 acme.NewAccount(acmeAccountEmail, true).GetAwaiter().GetResult();
                 var accountPemKey = acme.AccountKey.ToPem();
-                File.WriteAllText(this._acmeKeyFile, accountPemKey);
+
+                this._objectStorage.AddFileAsync($"config/{this._acmeKeyFile}", Encoding.UTF8.GetBytes(accountPemKey)).GetAwaiter().GetResult();
             }
         }
 
         public async Task<bool> ProcessAsync(string[] domains, CancellationToken cancellationToken = default)
         {
-            var accountPemKey = await File.ReadAllTextAsync(this._acmeKeyFile, cancellationToken);
+            var accountPemKeyData = await this._objectStorage.GetFileAsync($"config/{this._acmeKeyFile}", cancellationToken);
+            var accountPemKey = Encoding.UTF8.GetString(accountPemKeyData);
+
             var acme = new AcmeContext(this._acmeDirectoryUri, KeyFactory.FromPem(accountPemKey));
 
             var order = await acme.NewOrder(domains);
@@ -59,7 +68,7 @@ namespace Nager.CertificateManagement.Library
                 var dnsChallenge = await authorization.Dns();
                 var acmeToken = acme.AccountKey.DnsTxt(dnsChallenge.Token);
 
-                if (!await this._dnsProvider.CreateAcmeChallengeRecordAsync(cleanDomain, acmeToken, cancellationToken))
+                if (!await this._dnsManagementProvider.CreateAcmeChallengeRecordAsync(cleanDomain, acmeToken, cancellationToken))
                 {
                     return false;
                 }
@@ -90,16 +99,11 @@ namespace Nager.CertificateManagement.Library
                     CommonName = requestedDomain,
                 }, privateKey);
 
-                if (!Directory.Exists(cleanDomain))
-                {
-                    Directory.CreateDirectory(cleanDomain);
-                }
 
-                await File.WriteAllTextAsync($"{cleanDomain}/certificate.pem", cert.ToPem(), cancellationToken);
-                await File.WriteAllTextAsync($"{cleanDomain}/key.pem", privateKey.ToPem(), cancellationToken);
+                await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pem", Encoding.UTF8.GetBytes(cert.ToPem()), cancellationToken);
+                await this._objectStorage.AddFileAsync($"{cleanDomain}/key.pem", Encoding.UTF8.GetBytes(privateKey.ToPem()), cancellationToken);
 
-                await this._dnsProvider.RemoveAcmeChallengeRecordAsync(cleanDomain, cancellationToken);
-
+                await this._dnsManagementProvider.RemoveAcmeChallengeRecordAsync(cleanDomain, cancellationToken);
             }
 
             return true;
