@@ -7,5 +7,6 @@ namespace Nager.CertificateManagement.Library.CertificateJobRepository
     public interface ICertificateJobRepository
     {
         Task<CertificateJob[]> GetCertificateJobsAsync(CancellationToken cancellationToken = default);
+        Task<bool> AddCertificateJobAsync(AddCertificateJob addCertificateJob, CancellationToken cancellationToken = default);
     }
 }

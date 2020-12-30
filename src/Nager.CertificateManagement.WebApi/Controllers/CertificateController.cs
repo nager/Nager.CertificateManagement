@@ -49,9 +49,9 @@ namespace Nager.CertificateManagement.WebApi.Controllers
             };
 
             var domainParser = new DomainParser(new WebTldRuleProvider());
+            var domainInfo = domainParser.Parse(certificateRequest.Fqdn);
 
             var allowedDomains = await this._dnsManagementProvider.GetManagedDomainsAsync(cancellationToken);
-            var domainInfo = domainParser.Get(certificateRequest.Fqdn);
             if (!allowedDomains.Contains(domainInfo.RegistrableDomain))
             {
                 this.ModelState.AddModelError(nameof(certificateRequest.Fqdn), "Domain is not supported by provider");

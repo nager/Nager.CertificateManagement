@@ -28,10 +28,10 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
         ///<inheritdoc/>
         public async Task<bool> CreateAcmeChallengeRecordAsync(string fqdn, string acmeToken, CancellationToken cancellationToken = default)
         {
-            var domainName = this._domainParser.Get(fqdn);
+            var domainInfo = this._domainParser.Parse(fqdn);
 
             var zoneResponse = await this._dnsClient.GetZonesAsync(cancellationToken);
-            var zone = zoneResponse.Zones.SingleOrDefault(zone => zone.Name.Equals(domainName.RegistrableDomain, StringComparison.OrdinalIgnoreCase));
+            var zone = zoneResponse.Zones.SingleOrDefault(zone => zone.Name.Equals(domainInfo.RegistrableDomain, StringComparison.OrdinalIgnoreCase));
             if (zone == null)
             {
                 return false;
@@ -41,7 +41,7 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
             {
                 ZoneId = zone.Id,
                 Type = DnsRecordType.TXT,
-                Name = $"_acme-challenge.{domainName.SubDomain}",
+                Name = $"_acme-challenge.{domainInfo.SubDomain}",
                 Value = acmeToken,
                 Ttl = 0
             };

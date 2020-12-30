@@ -1,6 +1,8 @@
 ﻿using Nager.CertificateManagement.Library.Models;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -8,19 +10,26 @@ namespace Nager.CertificateManagement.Library.CertificateJobRepository
 {
     public class MockCertificateJobRepository : ICertificateJobRepository
     {
-        public Task<CertificateJob[]> GetCertificateJobsAsync(CancellationToken cancellationToken = default)
+        private readonly ConcurrentDictionary<Guid, CertificateJob> _certificateJobs = new ConcurrentDictionary<Guid, CertificateJob>();
+
+        public Task<bool> AddCertificateJobAsync(AddCertificateJob addCertificateJob, CancellationToken cancellationToken = default)
         {
-            var items = new List<CertificateJob>()
+            var certificateJob = new CertificateJob
             {
-                new CertificateJob
-                {
-                    Id = Guid.Parse("2C61EF52-7D39-4D05-BED7-126580EB0615"),
-                    Fqdn = "dev.test.nager.at",
-                    Created = new DateTime(2020, 12, 29)
-                }
+                Id = Guid.NewGuid(),
+                Created = DateTime.Now,
+                Fqdn = addCertificateJob.Fqdn,
+                IsAvailable = false
             };
 
-            return Task.FromResult(items.ToArray());
+            var successful = this._certificateJobs.TryAdd(certificateJob.Id, certificateJob);
+            return Task.FromResult(successful);
+        }
+
+        public Task<CertificateJob[]> GetCertificateJobsAsync(CancellationToken cancellationToken = default)
+        {
+            var items = this._certificateJobs.Values.ToArray();
+            return Task.FromResult(items);
         }
     }
 }
