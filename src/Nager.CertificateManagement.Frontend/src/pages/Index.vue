@@ -6,7 +6,7 @@
           v-model="fqdn"
           dense
           class="q-mb-sm"
-          label="Fully Qualified Domain Name (e.g. test.nager.at)"
+          label="Fully Qualified Domain Name (e.g. subdomain.mydomain.com)"
         />
 
         <q-btn
@@ -23,7 +23,19 @@
       :data="certificateJobs"
       :columns="columns"
       row-key="id"
-    />
+    >
+      <template v-slot:body-cell-actions="props">
+        <q-td :props="props">
+          <q-btn
+            dense
+            round
+            flat
+            color="grey"
+            icon="cloud_download"
+          />
+        </q-td>
+      </template>
+    </q-table>
   </q-page>
 </template>
 
@@ -33,10 +45,11 @@ export default {
   data () {
     return {
       columns: [
-        { name: 'FQDN', align: 'left', label: 'FQDN', field: 'fqdn' },
-        { name: 'Created', align: 'left', label: 'Created', field: 'created' },
-        { name: 'Updated', align: 'left', label: 'Updated', field: 'updated' },
-        { name: 'Available', align: 'left', label: 'Available', field: 'isAvailable' }
+        { name: 'fqdn', align: 'left', label: 'FQDN', field: 'fqdn' },
+        { name: 'created', align: 'left', label: 'Created', field: 'created' },
+        { name: 'updated', align: 'left', label: 'Updated', field: 'updated' },
+        { name: 'status', align: 'left', label: 'Status', field: 'status' },
+        { name: 'actions', align: 'left', label: 'Actions' }
       ],
       fqdn: '',
       certificateJobs: []

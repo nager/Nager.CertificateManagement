@@ -7,6 +7,8 @@ using Microsoft.OpenApi.Models;
 using Nager.CertificateManagement.Library.CertificateJobRepository;
 using Nager.CertificateManagement.Library.DnsManagementProvider;
 using Nager.CertificateManagement.Library.ObjectStorage;
+using Nager.CertificateManagement.WebApi.Services;
+using System.Text.Json.Serialization;
 
 namespace Nager.CertificateManagement.WebApi
 {
@@ -25,8 +27,13 @@ namespace Nager.CertificateManagement.WebApi
             services.AddSingleton<ICertificateJobRepository, MockCertificateJobRepository>();
             services.AddTransient<IObjectStorage, S3ObjectStorage>();
             services.AddTransient<IDnsManagementProvider>(provider => new HetznerDnsManagementProvider(Configuration["DnsProvider:Hetzner:ApiKey"]));
+            services.AddTransient<ICertificateService, CertificateService>();
 
-            services.AddControllers();
+            services.AddControllers().AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Nager.CertificateManagement.WebApi", Version = "v1" });

@@ -74,7 +74,7 @@ namespace Nager.CertificateManagement.Library
                 }
 
                 var dnsClient = new LookupClient(new LookupClientOptions(NameServer.GooglePublicDns, NameServer.GooglePublicDns2) { UseCache = false });
-                for (var i = 0; i < 60; i++)
+                for (var i = 0; i < 600; i++)
                 {
                     var queryResponse = await dnsClient.QueryAsync($"_acme-challenge.{cleanDomain}", QueryType.TXT, cancellationToken: cancellationToken);
                     if (queryResponse.Answers.TxtRecords().Any(txtRecord => txtRecord.Text.FirstOrDefault().Equals(acmeToken, StringComparison.OrdinalIgnoreCase)))
@@ -86,7 +86,14 @@ namespace Nager.CertificateManagement.Library
                     await Task.Delay(1000);
                 }
 
-                await dnsChallenge.Validate();
+                try
+                {
+                    await dnsChallenge.Validate();
+                }
+                catch (Exception exception)
+                {
+                    return false;
+                }
 
                 var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
                 var cert = await order.Generate(new CsrInfo

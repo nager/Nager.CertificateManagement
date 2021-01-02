@@ -1,7 +1,6 @@
 ﻿using Nager.CertificateManagement.Library.Models;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -19,7 +18,7 @@ namespace Nager.CertificateManagement.Library.CertificateJobRepository
                 Id = Guid.NewGuid(),
                 Created = DateTime.Now,
                 Fqdn = addCertificateJob.Fqdn,
-                IsAvailable = false
+                Status = CertificateJobStatus.Waiting
             };
 
             var successful = this._certificateJobs.TryAdd(certificateJob.Id, certificateJob);
