@@ -54,10 +54,10 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
         ///<inheritdoc/>
         public async Task<bool> RemoveAcmeChallengeRecordAsync(string fqdn, CancellationToken cancellationToken = default)
         {
-            var domainName = this._domainParser.Get(fqdn);
+            var domainInfo = this._domainParser.Parse(fqdn);
 
             var zoneResponse = await this._dnsClient.GetZonesAsync(cancellationToken);
-            var zone = zoneResponse.Zones.SingleOrDefault(zone => zone.Name.Equals(domainName.RegistrableDomain, StringComparison.OrdinalIgnoreCase));
+            var zone = zoneResponse.Zones.SingleOrDefault(zone => zone.Name.Equals(domainInfo.RegistrableDomain, StringComparison.OrdinalIgnoreCase));
             if (zone == null)
             {
                 return false;
@@ -65,7 +65,7 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
 
             var recordResponse = await this._dnsClient.GetRecordsAsync(zone.Id, cancellationToken);
             var records = recordResponse.Records.Where(record => 
-                record.Name.Equals($"_acme-challenge.{domainName.SubDomain}", StringComparison.OrdinalIgnoreCase) && 
+                record.Name.Equals($"_acme-challenge.{domainInfo.SubDomain}", StringComparison.OrdinalIgnoreCase) && 
                 record.Type == DnsRecordType.TXT);
 
             if (records == null)

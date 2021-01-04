@@ -27,6 +27,7 @@ namespace Nager.CertificateManagement.WebApi
             services.AddSingleton<ICertificateJobRepository, MockCertificateJobRepository>();
             services.AddTransient<IObjectStorage, S3ObjectStorage>();
             services.AddTransient<IDnsManagementProvider>(provider => new HetznerDnsManagementProvider(Configuration["DnsProvider:Hetzner:ApiKey"]));
+            services.AddTransient<IDnsManagementProvider>(provider => new CloudFlareDnsManagementProvider(Configuration["DnsProvider:CloudFlare:ApiKey"]));
             services.AddTransient<ICertificateService, CertificateService>();
 
             services.AddControllers().AddJsonOptions(options =>
