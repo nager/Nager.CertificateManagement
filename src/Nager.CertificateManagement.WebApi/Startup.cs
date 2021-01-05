@@ -8,6 +8,7 @@ using Nager.CertificateManagement.Library.CertificateJobRepository;
 using Nager.CertificateManagement.Library.DnsManagementProvider;
 using Nager.CertificateManagement.Library.ObjectStorage;
 using Nager.CertificateManagement.WebApi.Services;
+using Nager.PublicSuffix;
 using System.Text.Json.Serialization;
 
 namespace Nager.CertificateManagement.WebApi
@@ -24,8 +25,10 @@ namespace Nager.CertificateManagement.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<IDomainParser>(new DomainParser(new WebTldRuleProvider()));
             services.AddSingleton<ICertificateJobRepository, MockCertificateJobRepository>();
-            services.AddTransient<IObjectStorage, S3ObjectStorage>();
+            services.AddSingleton<IObjectStorage, S3ObjectStorage>();
+
             services.AddTransient<IDnsManagementProvider>(provider => new HetznerDnsManagementProvider(Configuration["DnsProvider:Hetzner:ApiKey"]));
             services.AddTransient<IDnsManagementProvider>(provider => new CloudFlareDnsManagementProvider(Configuration["DnsProvider:CloudFlare:ApiKey"]));
             services.AddTransient<ICertificateService, CertificateService>();

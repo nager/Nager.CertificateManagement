@@ -21,8 +21,7 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
 
         public async Task<string[]> GetManagedDomainsAsync(CancellationToken cancellationToken = default)
         {
-            //TODO: GetZonesAsync without a domain not work
-            var response = await this._dnsClient.GetZonesAsync("mydomain.com", cancellationToken);
+            var response = await this._dnsClient.GetZonesAsync(cancellationToken);
             return response.Result.Select(zone => zone.Name).ToArray();
         }
 

@@ -25,6 +25,11 @@ namespace Nager.CertificateManagement.Library.CertificateJobRepository
             return Task.FromResult(successful);
         }
 
+        public Task<CertificateJob> GetCertificateJobAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult(this._certificateJobs.Values.SingleOrDefault(job => job.Id == id));
+        }
+
         public Task<CertificateJob[]> GetCertificateJobsAsync(CancellationToken cancellationToken = default)
         {
             var items = this._certificateJobs.Values.ToArray();

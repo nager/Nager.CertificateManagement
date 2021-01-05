@@ -32,6 +32,8 @@
             flat
             color="grey"
             icon="cloud_download"
+            type="a"
+            :href="`api/certificatejob/download/${props.row.id}`"
           />
         </q-td>
       </template>

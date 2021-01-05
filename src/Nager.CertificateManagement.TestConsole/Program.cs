@@ -1,4 +1,5 @@
-﻿using Nager.CertificateManagement.Library;
+﻿using Microsoft.Extensions.Logging;
+using Nager.CertificateManagement.Library;
 using Nager.CertificateManagement.Library.DnsManagementProvider;
 using Nager.CertificateManagement.Library.ObjectStorage;
 using System;
@@ -13,6 +14,9 @@ namespace Nager.CertificateManagement
     {
         static void Main(string[] args)
         {
+            using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
+            ILogger<S3ObjectStorage> logger = loggerFactory.CreateLogger<S3ObjectStorage>();
+
             var myAcmeEmailAddress = "employee@company.com";
 
             var certificateSigningInfo = new CertificateSigningInfo
@@ -30,7 +34,7 @@ namespace Nager.CertificateManagement
             };
 
             IDnsManagementProvider dnsManagementProvider = new HetznerDnsManagementProvider("HetznerDnsApiKey");
-            IObjectStorage objectStorage = new S3ObjectStorage();
+            IObjectStorage objectStorage = new S3ObjectStorage(logger);
 
             var certificateManagement = new CertificateProcessor(
                 dnsManagementProvider,

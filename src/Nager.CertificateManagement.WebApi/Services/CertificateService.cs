@@ -18,6 +18,7 @@ namespace Nager.CertificateManagement.WebApi.Services
     {
         private readonly ILogger<CertificateService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly IDomainParser _domainParser;
         private readonly ICertificateJobRepository _certificateJobRepository;
         private readonly IEnumerable<IDnsManagementProvider> _dnsManagementProviders;
         private readonly IObjectStorage _objectStorage;
@@ -25,12 +26,14 @@ namespace Nager.CertificateManagement.WebApi.Services
         public CertificateService(
             ILogger<CertificateService> logger,
             IConfiguration configuration,
+            IDomainParser domainParser,
             ICertificateJobRepository certificateJobRepository,
             IEnumerable<IDnsManagementProvider> dnsManagementProviders,
             IObjectStorage objectStorage)
         {
             this._logger = logger;
             this._configuration = configuration;
+            this._domainParser = domainParser;
             this._certificateJobRepository = certificateJobRepository;
             this._dnsManagementProviders = dnsManagementProviders;
             this._objectStorage = objectStorage;
@@ -38,13 +41,19 @@ namespace Nager.CertificateManagement.WebApi.Services
 
         public async Task CheckAsync(CancellationToken cancellationToken = default)
         {
-            var domainParser = new DomainParser(new WebTldRuleProvider());
-
             var certificateJobs = await this._certificateJobRepository.GetCertificateJobsAsync(cancellationToken);
-            foreach (var certificateJob in certificateJobs)
+            var waitingCertificateJobs = certificateJobs.Where(o => o.Status != CertificateJobStatus.Done);
+
+            foreach (var certificateJob in waitingCertificateJobs)
             {
                 var isProcessable = false;
-                var domainInfo = domainParser.Parse(certificateJob.Fqdn);
+                var domainInfo = this._domainParser.Parse(certificateJob.Fqdn);
+
+                if (!await this._objectStorage.IsReadyAsync(cancellationToken))
+                {
+                    certificateJob.Status = CertificateJobStatus.Failure;
+                    continue;
+                }
 
                 foreach (var dnsManagementProvider in this._dnsManagementProviders)
                 {
