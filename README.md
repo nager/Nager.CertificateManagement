@@ -3,6 +3,7 @@
 ## Supported DNS Provider
 
 - Hetzner
+- CloudFlare
 
 ### Run a local minio instance
 ```bash
