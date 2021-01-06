@@ -1,0 +1,41 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build-api:
+    
+    runs-on: ubuntu-latest
+    env:
+      working-directory: ./src/Nager.CertificateManagement.WebApi
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.100
+    - name: Install dependencies
+      run: dotnet restore
+      working-directory: ${{env.working-directory}}
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      working-directory: ${{env.working-directory}}
+#    - name: Test
+#      run: dotnet test --no-restore --verbosity normal
+#      working-directory: ${{env.working-directory}}
+    - name: Publish
+      run: dotnet publish --no-restore --configuration Release --output publish
+      working-directory: ${{env.working-directory}}
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        # Artifact name
+        name: api
+        # Directory containing files to upload
+        path: ${{env.working-directory}}/publish/
+
