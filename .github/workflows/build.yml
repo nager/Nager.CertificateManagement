@@ -39,3 +39,36 @@ jobs:
         # Directory containing files to upload
         path: ${{env.working-directory}}/publish/
 
+
+  build-spa:
+
+    runs-on: ubuntu-latest
+    env:
+      working-directory: ./src/Nager.CertificateManagement.Frontend
+
+    strategy:
+      matrix:
+        node-version: [12.x]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
+    - name: Clean slate
+      run: npm ci
+      working-directory: ${{env.working-directory}}
+    - name: Install quasar
+      run: npm install -g @quasar/cli
+      working-directory: ${{env.working-directory}}
+    - name: Build
+      run: quasar build
+      working-directory: ${{env.working-directory}}
+    - name: Upload artifact
+      uses: actions/upload-artifact@v1.0.0
+      with:
+        # Artifact name
+        name: spa
+        # Directory containing files to upload
+        path: ${{env.working-directory}}/dist/spa/   
