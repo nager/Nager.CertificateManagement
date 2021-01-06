@@ -47,6 +47,8 @@ namespace Nager.CertificateManagement.WebApi.Services
             var certificateJobs = await this._certificateJobRepository.GetCertificateJobsAsync(cancellationToken);
             var waitingCertificateJobs = certificateJobs.Where(o => o.Status != CertificateJobStatus.Done);
 
+            this._logger.LogInformation("Run certificate service check");
+
             foreach (var certificateJob in waitingCertificateJobs)
             {
                 var isProcessable = false;

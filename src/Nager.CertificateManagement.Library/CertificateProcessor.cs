@@ -75,12 +75,15 @@ namespace Nager.CertificateManagement.Library
 
                 if (!await this._dnsManagementProvider.CreateAcmeChallengeRecordAsync(cleanDomain, acmeToken, cancellationToken))
                 {
+                    this._logger.LogError($"Cannot create acme challenge for {cleanDomain}");
                     return false;
                 }
 
                 var dnsClient = new LookupClient(new LookupClientOptions(NameServer.GooglePublicDns, NameServer.GooglePublicDns2) { UseCache = false });
                 for (var i = 0; i < 600; i++)
                 {
+                    this._logger.LogInformation($"Check google dns for {cleanDomain}");
+
                     var queryResponse = await dnsClient.QueryAsync($"_acme-challenge.{cleanDomain}", QueryType.TXT, cancellationToken: cancellationToken);
                     if (queryResponse.Answers.TxtRecords().Any(txtRecord => txtRecord.Text.FirstOrDefault().Equals(acmeToken, StringComparison.OrdinalIgnoreCase)))
                     {
@@ -101,6 +104,8 @@ namespace Nager.CertificateManagement.Library
                     return false;
                 }
 
+                this._logger.LogInformation($"Generate certifiacte {cleanDomain}");
+
                 var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
                 var cert = await order.Generate(new CsrInfo
                 {
@@ -113,10 +118,12 @@ namespace Nager.CertificateManagement.Library
                 }, privateKey);
 
 
-                this._logger.LogInformation("Upload certificate");
+                this._logger.LogInformation($"Upload certificate {cleanDomain}");
 
                 await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pem", Encoding.UTF8.GetBytes(cert.ToPem()), cancellationToken);
                 await this._objectStorage.AddFileAsync($"{cleanDomain}/key.pem", Encoding.UTF8.GetBytes(privateKey.ToPem()), cancellationToken);
+
+                this._logger.LogInformation($"Cleanup acme challenge for {cleanDomain}");
 
                 await this._dnsManagementProvider.RemoveAcmeChallengeRecordAsync(cleanDomain, cancellationToken);
             }
