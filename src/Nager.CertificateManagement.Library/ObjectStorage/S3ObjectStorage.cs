@@ -15,18 +15,19 @@ namespace Nager.CertificateManagement.Library.ObjectStorage
         private readonly AmazonS3Client _s3Client;
         private readonly string _bucketName = "certificatemanagement";
 
-        public S3ObjectStorage(ILogger<S3ObjectStorage> logger)
+        public S3ObjectStorage(
+            ILogger<S3ObjectStorage> logger,
+            S3Configuration s3Configuration)
         {
             this._logger = logger;
 
             var config = new AmazonS3Config
             {
-                ServiceURL = "http://localhost:9000",
+                ServiceURL = s3Configuration.Endpoint,
                 ForcePathStyle = true
             };
 
-            //TODO:Move config to appsettings
-            this._s3Client = new AmazonS3Client("AKIAIOSFODNN7EXAMPLE", "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY", config);
+            this._s3Client = new AmazonS3Client(s3Configuration.AccessKey, s3Configuration.SecretKey, config);
 
             try
             {
@@ -40,6 +41,12 @@ namespace Nager.CertificateManagement.Library.ObjectStorage
         }
 
         public void Dispose()
+        {
+            this.Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             this._s3Client?.Dispose();
         }

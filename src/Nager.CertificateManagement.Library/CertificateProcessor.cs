@@ -1,10 +1,10 @@
 ﻿using Certes;
 using Certes.Acme;
 using DnsClient;
+using Microsoft.Extensions.Logging;
 using Nager.CertificateManagement.Library.DnsManagementProvider;
 using Nager.CertificateManagement.Library.ObjectStorage;
 using System;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -16,17 +16,21 @@ namespace Nager.CertificateManagement.Library
     {
         private readonly string _acmeKeyFile = "acme-account-test.pem";
         private readonly Uri _acmeDirectoryUri = WellKnownServers.LetsEncryptStagingV2;
+
+        private readonly ILogger<CertificateProcessor> _logger;
         private readonly IDnsManagementProvider _dnsManagementProvider;
         private readonly IObjectStorage _objectStorage;
         private readonly CertificateSigningInfo _certificateSigningInfo;
 
         public CertificateProcessor(
+            ILogger<CertificateProcessor> logger,
             IDnsManagementProvider dnsManagementProvider,
             IObjectStorage objectStorage,
             string acmeAccountEmail,
             CertificateSigningInfo certificateSigningInfo,
             CertificateRequestMode certificateRequestMode)
         {
+            this._logger = logger;
             this._dnsManagementProvider = dnsManagementProvider;
             this._objectStorage = objectStorage;
 
@@ -55,6 +59,7 @@ namespace Nager.CertificateManagement.Library
 
             var acme = new AcmeContext(this._acmeDirectoryUri, KeyFactory.FromPem(accountPemKey));
 
+            this._logger.LogInformation($"Create order for {string.Join(',', domains)}");
             var order = await acme.NewOrder(domains);
 
             var authorizations = await order.Authorizations();
@@ -92,6 +97,7 @@ namespace Nager.CertificateManagement.Library
                 }
                 catch (Exception exception)
                 {
+                    this._logger.LogError(exception, "Validate failure");
                     return false;
                 }
 
@@ -106,6 +112,8 @@ namespace Nager.CertificateManagement.Library
                     CommonName = requestedDomain,
                 }, privateKey);
 
+
+                this._logger.LogInformation("Upload certificate");
 
                 await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pem", Encoding.UTF8.GetBytes(cert.ToPem()), cancellationToken);
                 await this._objectStorage.AddFileAsync($"{cleanDomain}/key.pem", Encoding.UTF8.GetBytes(privateKey.ToPem()), cancellationToken);
