@@ -51,30 +51,37 @@ namespace Nager.CertificateManagement.WebApi.Services
 
             foreach (var certificateJob in waitingCertificateJobs)
             {
-                var isProcessable = false;
-                var domainInfo = this._domainParser.Parse(certificateJob.Fqdn);
-
-                if (!await this._objectStorage.IsReadyAsync(cancellationToken))
+                try
                 {
-                    certificateJob.Status = CertificateJobStatus.Failure;
-                    continue;
-                }
+                    var isProcessable = false;
+                    var domainInfo = this._domainParser.Parse(certificateJob.Fqdn);
 
-                foreach (var dnsManagementProvider in this._dnsManagementProviders)
-                {
-                    var allowedDomains = await dnsManagementProvider.GetManagedDomainsAsync(cancellationToken);
-                    if (!allowedDomains.Contains(domainInfo.RegistrableDomain))
+                    if (!await this._objectStorage.IsReadyAsync(cancellationToken))
                     {
+                        certificateJob.Status = CertificateJobStatus.Failure;
                         continue;
                     }
 
-                    isProcessable = true;
-                    await this.ProcessJobAsync(certificateJob, dnsManagementProvider, cancellationToken);
-                }
+                    foreach (var dnsManagementProvider in this._dnsManagementProviders)
+                    {
+                        var allowedDomains = await dnsManagementProvider.GetManagedDomainsAsync(cancellationToken);
+                        if (!allowedDomains.Contains(domainInfo.RegistrableDomain))
+                        {
+                            continue;
+                        }
 
-                if (!isProcessable)
+                        isProcessable = true;
+                        await this.ProcessJobAsync(certificateJob, dnsManagementProvider, cancellationToken);
+                    }
+
+                    if (!isProcessable)
+                    {
+                        certificateJob.Status = CertificateJobStatus.NoDnsProvider;
+                    }
+                }
+                catch (Exception exception)
                 {
-                    certificateJob.Status = CertificateJobStatus.NoDnsProvider;
+                    this._logger.LogError(exception, $"Process {certificateJob.Fqdn}");
                 }
             }
         }
