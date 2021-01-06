@@ -15,7 +15,8 @@ namespace Nager.CertificateManagement
         static void Main(string[] args)
         {
             using ILoggerFactory loggerFactory = LoggerFactory.Create(builder => builder.AddConsole());
-            ILogger<S3ObjectStorage> logger = loggerFactory.CreateLogger<S3ObjectStorage>();
+            ILogger<S3ObjectStorage> loggerObjectStorage = loggerFactory.CreateLogger<S3ObjectStorage>();
+            ILogger<CertificateProcessor> loggerCertificateProcessor = loggerFactory.CreateLogger<CertificateProcessor>();
 
             var myAcmeEmailAddress = "employee@company.com";
 
@@ -33,10 +34,18 @@ namespace Nager.CertificateManagement
                 "*.devops.company.com"
             };
 
+            var s3Configuration = new S3Configuration
+            {
+                Endpoint = "http://localhost:9000",
+                AccessKey = "",
+                SecretKey = ""
+            };
+
             IDnsManagementProvider dnsManagementProvider = new HetznerDnsManagementProvider("HetznerDnsApiKey");
-            IObjectStorage objectStorage = new S3ObjectStorage(logger);
+            IObjectStorage objectStorage = new S3ObjectStorage(loggerObjectStorage, s3Configuration);
 
             var certificateManagement = new CertificateProcessor(
+                loggerCertificateProcessor,
                 dnsManagementProvider,
                 objectStorage,
                 myAcmeEmailAddress,

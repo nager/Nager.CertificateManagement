@@ -18,6 +18,7 @@ namespace Nager.CertificateManagement.WebApi.Services
     {
         private readonly ILogger<CertificateService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly ILoggerFactory _loggerFactory;
         private readonly IDomainParser _domainParser;
         private readonly ICertificateJobRepository _certificateJobRepository;
         private readonly IEnumerable<IDnsManagementProvider> _dnsManagementProviders;
@@ -26,6 +27,7 @@ namespace Nager.CertificateManagement.WebApi.Services
         public CertificateService(
             ILogger<CertificateService> logger,
             IConfiguration configuration,
+            ILoggerFactory loggerFactory,
             IDomainParser domainParser,
             ICertificateJobRepository certificateJobRepository,
             IEnumerable<IDnsManagementProvider> dnsManagementProviders,
@@ -33,6 +35,7 @@ namespace Nager.CertificateManagement.WebApi.Services
         {
             this._logger = logger;
             this._configuration = configuration;
+            this._loggerFactory = loggerFactory;
             this._domainParser = domainParser;
             this._certificateJobRepository = certificateJobRepository;
             this._dnsManagementProviders = dnsManagementProviders;
@@ -88,7 +91,10 @@ namespace Nager.CertificateManagement.WebApi.Services
                 OrganizationUnit = "Dev"
             };
 
+            var logger = this._loggerFactory.CreateLogger<CertificateProcessor>();
+
             var certificateProcessor = new CertificateProcessor(
+                logger,
                 dnsManagementProvider,
                 this._objectStorage,
                 this._configuration["email"],
