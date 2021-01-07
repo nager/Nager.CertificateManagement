@@ -1,5 +1,7 @@
 # Nager.CertificateManagement
 
+![Nager.CertificateManagement](doc/screenshot.png)
+
 ## Supported DNS Provider
 
 - Hetzner
@@ -7,13 +9,15 @@
 
 ## Start Application
 
-Update configuration in docker-compose.yml
+Update the configuration in the `docker-compose.yml` file before start the application.
+After the start the application is available under http://localhost
 
 ```bash
 docker-compose up
 ```
 
-### Run a local minio instance
+Update application
+
 ```bash
-docker run -p 9000:9000 -e "MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE" -e "MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" minio/minio server /data
+docker-compose pull
 ```
