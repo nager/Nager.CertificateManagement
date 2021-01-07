@@ -2,7 +2,7 @@
   "name": "certificate-management",
   "version": "0.0.1",
   "description": "A Quasar Framework app",
-  "productName": "Quasar App",
+  "productName": "Nager.Certificate Management",
   "author": "Tino Hager <tino.hager@nager.at>",
   "private": true,
   "scripts": {

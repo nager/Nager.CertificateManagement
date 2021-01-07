@@ -79,10 +79,18 @@ namespace Nager.CertificateManagement.Library
                     return false;
                 }
 
-                var dnsClient = new LookupClient(new LookupClientOptions(NameServer.GooglePublicDns, NameServer.GooglePublicDns2) { UseCache = false });
-                for (var i = 0; i < 600; i++)
+                var lookupClientOptions = new LookupClientOptions(NameServer.GooglePublicDns, NameServer.GooglePublicDns2)
                 {
-                    this._logger.LogInformation($"Check google dns for {cleanDomain}");
+                    UseCache = false,
+                    MaximumCacheTimeout = TimeSpan.Zero,
+                    Retries = 0
+                };
+                var dnsClient = new LookupClient(lookupClientOptions);
+
+                var maxRetries = 600;
+                for (var i = 0; i < maxRetries; i++)
+                {
+                    this._logger.LogInformation($"Check google dns for {cleanDomain} {i}/{maxRetries}");
 
                     var queryResponse = await dnsClient.QueryAsync($"_acme-challenge.{cleanDomain}", QueryType.TXT, cancellationToken: cancellationToken);
                     if (queryResponse.Answers.TxtRecords().Any(txtRecord => txtRecord.Text.FirstOrDefault().Equals(acmeToken, StringComparison.OrdinalIgnoreCase)))
@@ -90,9 +98,10 @@ namespace Nager.CertificateManagement.Library
                         break;
                     }
 
-
                     await Task.Delay(1000);
                 }
+
+                await Task.Delay(2000);
 
                 try
                 {
@@ -107,6 +116,7 @@ namespace Nager.CertificateManagement.Library
                 this._logger.LogInformation($"Generate certifiacte {cleanDomain}");
 
                 var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
+
                 var cert = await order.Generate(new CsrInfo
                 {
                     CountryName = this._certificateSigningInfo.CountryName,
@@ -114,14 +124,19 @@ namespace Nager.CertificateManagement.Library
                     Locality = this._certificateSigningInfo.Locality,
                     Organization = this._certificateSigningInfo.Organization,
                     OrganizationUnit = this._certificateSigningInfo.OrganizationUnit,
-                    CommonName = requestedDomain,
+                    CommonName = requestedDomain
                 }, privateKey);
 
+                var pfxBuilder = cert.ToPfx(privateKey);
+                var pfxData = pfxBuilder.Build(cleanDomain, string.Empty);
+
+                var keyData = Encoding.UTF8.GetBytes(privateKey.ToPem());
+                var certificateData = Encoding.UTF8.GetBytes(cert.ToPem());
 
                 this._logger.LogInformation($"Upload certificate {cleanDomain}");
-
-                await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pem", Encoding.UTF8.GetBytes(cert.ToPem()), cancellationToken);
-                await this._objectStorage.AddFileAsync($"{cleanDomain}/key.pem", Encoding.UTF8.GetBytes(privateKey.ToPem()), cancellationToken);
+                await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.key", keyData, cancellationToken);
+                await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pem", certificateData, cancellationToken);
+                await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pfx", pfxData, cancellationToken);
 
                 this._logger.LogInformation($"Cleanup acme challenge for {cleanDomain}");
 

@@ -18,10 +18,17 @@ namespace Nager.CertificateManagement.Library.CertificateJobRepository
                 Id = Guid.NewGuid(),
                 Created = DateTime.Now,
                 Fqdn = addCertificateJob.Fqdn,
+                JobType = addCertificateJob.JobType,
                 Status = CertificateJobStatus.Waiting
             };
 
             var successful = this._certificateJobs.TryAdd(certificateJob.Id, certificateJob);
+            return Task.FromResult(successful);
+        }
+
+        public Task<bool> DeleteCertificateJobAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var successful = this._certificateJobs.TryRemove(id, out _);
             return Task.FromResult(successful);
         }
 

@@ -8,6 +8,9 @@ using Nager.CertificateManagement.WebApi.Services;
 using Nager.PublicSuffix;
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -42,7 +45,7 @@ namespace Nager.CertificateManagement.WebApi.Controllers
             CancellationToken cancellationToken = default)
         {
             var items = await this._certificateJobRepository.GetCertificateJobsAsync(cancellationToken);
-            return StatusCode(StatusCodes.Status200OK, items);
+            return StatusCode(StatusCodes.Status200OK, items.OrderByDescending(o => o.Created));
         }
 
         [HttpPost]
@@ -66,6 +69,20 @@ namespace Nager.CertificateManagement.WebApi.Controllers
             return StatusCode(StatusCodes.Status500InternalServerError);
         }
 
+        [HttpDelete]
+        [Route("{id}")]
+        public async Task<ActionResult> DeleteAsync(
+            [Required] [FromRoute] Guid id,
+            CancellationToken cancellationToken = default)
+        {
+            if (await this._certificateJobRepository.DeleteCertificateJobAsync(id, cancellationToken))
+            {
+                return StatusCode(StatusCodes.Status200OK);
+            }
+
+            return StatusCode(StatusCodes.Status500InternalServerError);
+        }
+
         [HttpGet]
         [Route("download/{id}")]
         public async Task<ActionResult> DownloadCertificateAsync(
@@ -74,9 +91,23 @@ namespace Nager.CertificateManagement.WebApi.Controllers
         {
             var item = await this._certificateJobRepository.GetCertificateJobAsync(id, cancellationToken);
 
-            var fileData = await this._objectStorage.GetFileAsync($"{item.Fqdn}/certificate.pem", cancellationToken);
+            var fileExtensions = new[] { "key", "pem", "pfx" };
 
-            return File(fileData, "application/x-pem-file", "certificate.pem");
+            using var memoryStream = new MemoryStream();
+            using (var zipArchive = new ZipArchive(memoryStream, ZipArchiveMode.Create))
+            {
+                foreach (var fileExtension in fileExtensions)
+                {
+                    var file = $"{item.Fqdn}/certificate.{fileExtension}";
+                    var fileData = await this._objectStorage.GetFileAsync(file, cancellationToken);
+
+                    var entry = zipArchive.CreateEntry(file);
+                    using var writer = new BinaryWriter(entry.Open());
+                    writer.Write(fileData);
+                }
+            }
+
+            return File(memoryStream.ToArray(), "application/zip", $"certificate.zip");
         }
     }
 }
