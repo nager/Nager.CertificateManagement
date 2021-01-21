@@ -2,6 +2,8 @@
 
 ![Nager.CertificateManagement](doc/screenshot.png)
 
+![Nager.CertificateManagement](doc/architecture overview.png)
+
 ## Supported DNS Provider
 
 - Hetzner
