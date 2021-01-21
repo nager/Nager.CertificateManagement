@@ -4,7 +4,7 @@ Nager.CertificateManagement provides Lets Encrypt certificates for internal serv
 
 ![Nager.CertificateManagement](doc/screenshot.png)
 
-![Nager.CertificateManagement](doc/architecture%20overview.png)
+![Nager.CertificateManagement](doc/architecture%20overview.png)<br>
 The certificates can then be obtained by the individual servers from the S3 storage. In contrast to other solutions, the access data does not have to be stored at a central location.
 
 ## Supported DNS Provider
