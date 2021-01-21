@@ -1,6 +1,6 @@
 # Nager.CertificateManagement
 
-Nager.CertificateManagement provides Lets Encrypt certificates for internal servers, switches etc.. The certificates are requested via the DNS challenge, so the internal servers do not need an external connection.
+Nager.CertificateManagement provides Lets Encrypt certificates for internal servers, switches etc.. The certificates are requested via the [DNS challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge), so the internal servers do not need an external connection.
 
 ![Nager.CertificateManagement](doc/screenshot.png)
 
