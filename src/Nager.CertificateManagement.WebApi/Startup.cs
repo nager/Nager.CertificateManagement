@@ -37,8 +37,7 @@ namespace Nager.CertificateManagement.WebApi
             services.AddSingleton(s3Configuration);
             services.AddSingleton<IObjectStorage, S3ObjectStorage>();
 
-            services.AddTransient<IDnsManagementProvider>(provider => new HetznerDnsManagementProvider(Configuration["DnsProvider:Hetzner:ApiKey"]));
-            services.AddTransient<IDnsManagementProvider>(provider => new CloudFlareDnsManagementProvider(Configuration["DnsProvider:CloudFlare:ApiKey"]));
+            this.AddDnsManagementProvider(services);
             services.AddTransient<ICertificateService, CertificateService>();
 
             services.AddControllers().AddJsonOptions(options =>
@@ -50,6 +49,21 @@ namespace Nager.CertificateManagement.WebApi
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Nager.CertificateManagement.WebApi", Version = "v1" });
             });
+        }
+
+        private void AddDnsManagementProvider(IServiceCollection services)
+        {
+            var hetznerApiKey = Configuration["DnsProvider:Hetzner:ApiKey"];
+            if (!string.IsNullOrEmpty(hetznerApiKey))
+            {
+                services.AddTransient<IDnsManagementProvider>(provider => new HetznerDnsManagementProvider(hetznerApiKey));
+            }
+
+            var cloudFlareApiKey = Configuration["DnsProvider:CloudFlare:ApiKey"];
+            if (!string.IsNullOrEmpty(cloudFlareApiKey))
+            {
+                services.AddTransient<IDnsManagementProvider>(provider => new CloudFlareDnsManagementProvider(cloudFlareApiKey));
+            }
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
