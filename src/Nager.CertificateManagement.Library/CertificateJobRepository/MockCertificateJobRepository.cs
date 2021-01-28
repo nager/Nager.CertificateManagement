@@ -26,6 +26,14 @@ namespace Nager.CertificateManagement.Library.CertificateJobRepository
             return Task.FromResult(successful);
         }
 
+        public Task<bool> UpdateCertificateJobStatusAsync(Guid id, CertificateJobStatus certificateJobStatus, CancellationToken cancellationToken = default)
+        {
+            this._certificateJobs.TryGetValue(id, out var certificateJob);
+            certificateJob.Status = certificateJobStatus;
+
+            return Task.FromResult(true);
+        }
+
         public Task<bool> DeleteCertificateJobAsync(Guid id, CancellationToken cancellationToken = default)
         {
             var successful = this._certificateJobs.TryRemove(id, out _);

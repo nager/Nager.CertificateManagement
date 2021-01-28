@@ -58,7 +58,7 @@ namespace Nager.CertificateManagement.WebApi.Services
 
                     if (!await this._objectStorage.IsReadyAsync(cancellationToken))
                     {
-                        certificateJob.Status = CertificateJobStatus.Failure;
+                        await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.Failure);
                         continue;
                     }
 
@@ -76,7 +76,7 @@ namespace Nager.CertificateManagement.WebApi.Services
 
                     if (!isProcessable)
                     {
-                        certificateJob.Status = CertificateJobStatus.NoDnsProvider;
+                        await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.NoDnsProvider);
                     }
                 }
                 catch (Exception exception)
@@ -110,12 +110,12 @@ namespace Nager.CertificateManagement.WebApi.Services
                 certificateSigningInfo,
                 CertificateRequestMode.Test);
 
-            certificateJob.Status = CertificateJobStatus.InProgress;
+            await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.InProgress);
 
             var isSuccessful = await certificateProcessor.ProcessAsync(new string[] { certificateJob.Fqdn }, cancellationToken);
             if (isSuccessful)
             {
-                certificateJob.Status = CertificateJobStatus.Done;
+                await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.Done);
             }
 
             return isSuccessful;

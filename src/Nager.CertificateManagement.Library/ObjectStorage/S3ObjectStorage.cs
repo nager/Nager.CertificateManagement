@@ -92,6 +92,21 @@ namespace Nager.CertificateManagement.Library.ObjectStorage
             await this._s3Client.PutObjectAsync(request, cancellationToken);
         }
 
+        public async Task<string[]> GetFileKeysAsync(string prefix, CancellationToken cancellationToken = default)
+        {
+            var request = new ListObjectsV2Request
+            {
+                BucketName = this._bucketName,
+                Prefix = prefix
+            };
+
+            var response = await this._s3Client.ListObjectsV2Async(request, cancellationToken);
+
+            return response.S3Objects.Select(o => o.Key).ToArray();
+
+            return new string[0];
+        }
+
         public async Task<byte[]> GetFileAsync(string key, CancellationToken cancellationToken = default)
         {
             var request = new GetObjectRequest

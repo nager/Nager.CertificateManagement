@@ -32,10 +32,12 @@ namespace Nager.CertificateManagement.WebApi
                 SecretKey = Configuration["ObjectStorage:SecretKey"]
             };
 
-            services.AddSingleton<IDomainParser>(new DomainParser(new WebTldRuleProvider()));
-            services.AddSingleton<ICertificateJobRepository, MockCertificateJobRepository>();
             services.AddSingleton(s3Configuration);
             services.AddSingleton<IObjectStorage, S3ObjectStorage>();
+
+            services.AddSingleton<IDomainParser>(new DomainParser(new WebTldRuleProvider()));
+            //services.AddSingleton<ICertificateJobRepository, MockCertificateJobRepository>();
+            services.AddSingleton<ICertificateJobRepository, S3CertificateJobRepository>();
 
             this.AddDnsManagementProvider(services);
             services.AddTransient<ICertificateService, CertificateService>();
