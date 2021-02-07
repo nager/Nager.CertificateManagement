@@ -1,5 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nager.CertificateManagement.Library;
 using Nager.CertificateManagement.Library.CertificateJobRepository;
 using Nager.CertificateManagement.Library.DnsManagementProvider;
@@ -18,6 +19,7 @@ namespace Nager.CertificateManagement.WebApi.Services
     {
         private readonly ILogger<CertificateService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly CertificateSigningInfo _certificateSigningInfo;
         private readonly ILoggerFactory _loggerFactory;
         private readonly IDomainParser _domainParser;
         private readonly ICertificateJobRepository _certificateJobRepository;
@@ -27,6 +29,7 @@ namespace Nager.CertificateManagement.WebApi.Services
         public CertificateService(
             ILogger<CertificateService> logger,
             IConfiguration configuration,
+            IOptions<CertificateSigningInfo> certificateSigningInfo,
             ILoggerFactory loggerFactory,
             IDomainParser domainParser,
             ICertificateJobRepository certificateJobRepository,
@@ -35,6 +38,7 @@ namespace Nager.CertificateManagement.WebApi.Services
         {
             this._logger = logger;
             this._configuration = configuration;
+            this._certificateSigningInfo = certificateSigningInfo.Value;
             this._loggerFactory = loggerFactory;
             this._domainParser = domainParser;
             this._certificateJobRepository = certificateJobRepository;
@@ -91,15 +95,6 @@ namespace Nager.CertificateManagement.WebApi.Services
             IDnsManagementProvider dnsManagementProvider,
             CancellationToken cancellationToken = default)
         {
-            var certificateSigningInfo = new CertificateSigningInfo
-            {
-                CountryName = "AT",
-                State = "Vorarlberg",
-                Locality = "Dornbirn",
-                Organization = "Company",
-                OrganizationUnit = "Dev"
-            };
-
             var logger = this._loggerFactory.CreateLogger<CertificateProcessor>();
 
             var certificateProcessor = new CertificateProcessor(
@@ -107,7 +102,7 @@ namespace Nager.CertificateManagement.WebApi.Services
                 dnsManagementProvider,
                 this._objectStorage,
                 this._configuration["email"],
-                certificateSigningInfo,
+                this._certificateSigningInfo,
                 CertificateRequestMode.Test);
 
             await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.InProgress);
@@ -116,6 +111,10 @@ namespace Nager.CertificateManagement.WebApi.Services
             if (isSuccessful)
             {
                 await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.Done);
+            }
+            else
+            {
+                await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.Failure);
             }
 
             return isSuccessful;

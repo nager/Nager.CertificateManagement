@@ -2,6 +2,8 @@
   <q-table
     title="Certificate Jobs"
     dense
+    flat
+    bordered
     :data="certificateJobs"
     :columns="columns"
     :pagination="pagination"

@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Nager.CertificateManagement.Library;
 using Nager.CertificateManagement.Library.DnsManagementProvider;
 using Nager.CertificateManagement.Library.ObjectStorage;
@@ -42,7 +43,7 @@ namespace Nager.CertificateManagement
             };
 
             IDnsManagementProvider dnsManagementProvider = new HetznerDnsManagementProvider("HetznerDnsApiKey");
-            IObjectStorage objectStorage = new S3ObjectStorage(loggerObjectStorage, s3Configuration);
+            IObjectStorage objectStorage = new S3ObjectStorage(loggerObjectStorage, Options.Create(s3Configuration));
 
             var certificateManagement = new CertificateProcessor(
                 loggerCertificateProcessor,

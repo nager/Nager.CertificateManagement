@@ -1,9 +1,11 @@
 ﻿using Amazon.S3;
 using Amazon.S3.Model;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -17,17 +19,17 @@ namespace Nager.CertificateManagement.Library.ObjectStorage
 
         public S3ObjectStorage(
             ILogger<S3ObjectStorage> logger,
-            S3Configuration s3Configuration)
+            IOptions<S3Configuration> s3Configuration)
         {
             this._logger = logger;
 
             var config = new AmazonS3Config
             {
-                ServiceURL = s3Configuration.Endpoint,
+                ServiceURL = s3Configuration.Value.Endpoint,
                 ForcePathStyle = true
             };
 
-            this._s3Client = new AmazonS3Client(s3Configuration.AccessKey, s3Configuration.SecretKey, config);
+            this._s3Client = new AmazonS3Client(s3Configuration.Value.AccessKey, s3Configuration.Value.SecretKey, config);
 
             try
             {
@@ -78,7 +80,7 @@ namespace Nager.CertificateManagement.Library.ObjectStorage
             return false;
         }
 
-        public async Task AddFileAsync(string key, byte[] data, CancellationToken cancellationToken = default)
+        public async Task<bool> AddFileAsync(string key, byte[] data, CancellationToken cancellationToken = default)
         {
             using var memoryStream = new MemoryStream(data);
 
@@ -89,7 +91,40 @@ namespace Nager.CertificateManagement.Library.ObjectStorage
                 Key = key,
             };
 
-            await this._s3Client.PutObjectAsync(request, cancellationToken);
+            var response = await this._s3Client.PutObjectAsync(request, cancellationToken);
+            return this.IsSuccessfulStatusCode(response.HttpStatusCode);
+        }
+
+        public async Task<bool> RemoveFileAsync(string key, CancellationToken cancellationToken = default)
+        {
+            var request = new DeleteObjectRequest
+            {
+                BucketName = this._bucketName,
+                Key = key
+            };
+
+            var response = await this._s3Client.DeleteObjectAsync(request, cancellationToken);
+            return this.IsSuccessfulStatusCode(response.HttpStatusCode);
+        }
+
+        private bool IsSuccessfulStatusCode(HttpStatusCode httpStatusCode)
+        {
+            if (httpStatusCode == HttpStatusCode.OK)
+            {
+                return true;
+            }
+
+            if (httpStatusCode == HttpStatusCode.Created)
+            {
+                return true;
+            }
+
+            if (httpStatusCode == HttpStatusCode.NoContent)
+            {
+                return true;
+            }
+
+            return false;
         }
 
         public async Task<string[]> GetFileKeysAsync(string prefix, CancellationToken cancellationToken = default)
@@ -103,8 +138,6 @@ namespace Nager.CertificateManagement.Library.ObjectStorage
             var response = await this._s3Client.ListObjectsV2Async(request, cancellationToken);
 
             return response.S3Objects.Select(o => o.Key).ToArray();
-
-            return new string[0];
         }
 
         public async Task<byte[]> GetFileAsync(string key, CancellationToken cancellationToken = default)

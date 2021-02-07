@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Nager.CertificateManagement.Library;
 using Nager.CertificateManagement.Library.CertificateJobRepository;
 using Nager.CertificateManagement.Library.DnsManagementProvider;
 using Nager.CertificateManagement.Library.ObjectStorage;
@@ -25,14 +26,9 @@ namespace Nager.CertificateManagement.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            var s3Configuration = new S3Configuration
-            {
-                Endpoint = Configuration["ObjectStorage:Endpoint"],
-                AccessKey = Configuration["ObjectStorage:AccessKey"],
-                SecretKey = Configuration["ObjectStorage:SecretKey"]
-            };
+            services.Configure<CertificateSigningInfo>(Configuration.GetSection("CertificateSigningInfo"));
+            services.Configure<S3Configuration>(Configuration.GetSection("ObjectStorage"));
 
-            services.AddSingleton(s3Configuration);
             services.AddSingleton<IObjectStorage, S3ObjectStorage>();
 
             services.AddSingleton<IDomainParser>(new DomainParser(new WebTldRuleProvider()));

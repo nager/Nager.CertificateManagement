@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Nager.CertificateManagement.Library.DnsManagementProvider;
 using Nager.CertificateManagement.Library.ObjectStorage;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading;
@@ -62,6 +63,8 @@ namespace Nager.CertificateManagement.Library
             this._logger.LogInformation($"Create order for {string.Join(',', domains)}");
             var order = await acme.NewOrder(domains);
 
+            var results = new Dictionary<string, bool>();
+
             var authorizations = await order.Authorizations();
             foreach (var authorization in authorizations)
             {
@@ -79,6 +82,9 @@ namespace Nager.CertificateManagement.Library
                     return false;
                 }
 
+                // Wait a short moment before the first query starts
+                await Task.Delay(5000);
+
                 var lookupClientOptions = new LookupClientOptions(NameServer.GooglePublicDns, NameServer.GooglePublicDns2)
                 {
                     UseCache = false,
@@ -87,10 +93,10 @@ namespace Nager.CertificateManagement.Library
                 };
                 var dnsClient = new LookupClient(lookupClientOptions);
 
-                var maxRetries = 600;
-                for (var i = 0; i < maxRetries; i++)
+                var maxDnsCheckRetries = 600;
+                for (var i = 0; i < maxDnsCheckRetries; i++)
                 {
-                    this._logger.LogInformation($"Check google dns for {cleanDomain} {i}/{maxRetries}");
+                    this._logger.LogInformation($"Check google dns for {cleanDomain} {i}/{maxDnsCheckRetries}");
 
                     var queryResponse = await dnsClient.QueryAsync($"_acme-challenge.{cleanDomain}", QueryType.TXT, cancellationToken: cancellationToken);
                     if (queryResponse.Answers.TxtRecords().Any(txtRecord => txtRecord.Text.FirstOrDefault().Equals(acmeToken, StringComparison.OrdinalIgnoreCase)))
@@ -102,45 +108,71 @@ namespace Nager.CertificateManagement.Library
                 }
 
                 await Task.Delay(2000);
+                var successful = true;
+                var maxGetCertificateRetries = 5;
 
-                try
+                for (var retry = 0; retry <= maxGetCertificateRetries; retry++)
                 {
-                    await dnsChallenge.Validate();
+                    if (retry == maxDnsCheckRetries)
+                    {
+                        successful = false;
+                        break;
+                    }
+
+                    try
+                    {
+                        this._logger.LogInformation("Start Validation");
+                        await dnsChallenge.Validate();
+                    }
+                    catch (Exception exception)
+                    {
+                        this._logger.LogError(exception, "Validate failure");
+                        continue;
+                    }
+
+                    this._logger.LogInformation($"Generate certifiacte {cleanDomain}");
+
+                    var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
+
+                    await Task.Delay(6000);
+
+                    try
+                    {
+                        var cert = await order.Generate(new CsrInfo
+                        {
+                            CountryName = this._certificateSigningInfo.CountryName,
+                            State = this._certificateSigningInfo.State,
+                            Locality = this._certificateSigningInfo.Locality,
+                            Organization = this._certificateSigningInfo.Organization,
+                            OrganizationUnit = this._certificateSigningInfo.OrganizationUnit,
+                            CommonName = requestedDomain
+                        }, privateKey);
+
+                        var pfxBuilder = cert.ToPfx(privateKey);
+                        var pfxData = pfxBuilder.Build(cleanDomain, string.Empty);
+
+                        var keyData = Encoding.UTF8.GetBytes(privateKey.ToPem());
+                        var certificateData = Encoding.UTF8.GetBytes(cert.ToPem());
+
+                        this._logger.LogInformation($"Upload certificate {cleanDomain}");
+                        await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.key", keyData, cancellationToken);
+                        await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pem", certificateData, cancellationToken);
+                        await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pfx", pfxData, cancellationToken);
+
+                        this._logger.LogInformation($"Cleanup acme challenge for {cleanDomain}");
+                    }
+                    catch (Exception exception)
+                    {
+                        this._logger.LogError(exception, "Generate failure");
+                        continue;
+                    }
+
+                    break;
                 }
-                catch (Exception exception)
-                {
-                    this._logger.LogError(exception, "Validate failure");
-                    return false;
-                }
-
-                this._logger.LogInformation($"Generate certifiacte {cleanDomain}");
-
-                var privateKey = KeyFactory.NewKey(KeyAlgorithm.ES256);
-
-                var cert = await order.Generate(new CsrInfo
-                {
-                    CountryName = this._certificateSigningInfo.CountryName,
-                    State = this._certificateSigningInfo.State,
-                    Locality = this._certificateSigningInfo.Locality,
-                    Organization = this._certificateSigningInfo.Organization,
-                    OrganizationUnit = this._certificateSigningInfo.OrganizationUnit,
-                    CommonName = requestedDomain
-                }, privateKey);
-
-                var pfxBuilder = cert.ToPfx(privateKey);
-                var pfxData = pfxBuilder.Build(cleanDomain, string.Empty);
-
-                var keyData = Encoding.UTF8.GetBytes(privateKey.ToPem());
-                var certificateData = Encoding.UTF8.GetBytes(cert.ToPem());
-
-                this._logger.LogInformation($"Upload certificate {cleanDomain}");
-                await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.key", keyData, cancellationToken);
-                await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pem", certificateData, cancellationToken);
-                await this._objectStorage.AddFileAsync($"{cleanDomain}/certificate.pfx", pfxData, cancellationToken);
-
-                this._logger.LogInformation($"Cleanup acme challenge for {cleanDomain}");
 
                 await this._dnsManagementProvider.RemoveAcmeChallengeRecordAsync(cleanDomain, cancellationToken);
+
+                results.Add(cleanDomain, successful);
             }
 
             return true;
