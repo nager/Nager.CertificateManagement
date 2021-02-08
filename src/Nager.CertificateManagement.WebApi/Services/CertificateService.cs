@@ -107,7 +107,9 @@ namespace Nager.CertificateManagement.WebApi.Services
 
             await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.InProgress);
 
-            var isSuccessful = await certificateProcessor.ProcessAsync(new string[] { certificateJob.Fqdn }, cancellationToken);
+            var domain = this.GetDomain(certificateJob);
+
+            var isSuccessful = await certificateProcessor.ProcessAsync(new string[] { domain }, cancellationToken);
             if (isSuccessful)
             {
                 await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.Done);
@@ -118,6 +120,16 @@ namespace Nager.CertificateManagement.WebApi.Services
             }
 
             return isSuccessful;
+        }
+
+        private string GetDomain(CertificateJob certificateJob)
+        {
+            if (certificateJob.Wildcard)
+            {
+                return $"*.{certificateJob.Fqdn}";
+            }
+
+            return certificateJob.Fqdn;
         }
     }
 }

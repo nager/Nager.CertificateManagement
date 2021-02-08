@@ -34,6 +34,11 @@
               label="Fully Qualified Domain Name (e.g. subdomain.mydomain.com)"
             />
 
+            <q-checkbox
+              v-model="wildcard"
+              label="Wildcard"
+            />
+
             <q-select
               v-model="jobType"
               class="q-mb-md"
@@ -61,6 +66,7 @@ export default {
     return {
       dialogVisible: false,
       fqdn: '',
+      wildcard: false,
       jobType: 'OneTime',
       options: [
         'OneTime', 'AutoRenewal'
@@ -70,8 +76,8 @@ export default {
   methods: {
     async create () {
       try {
-        await this.$axios.post('/api/CertificateJob', { fqdn: this.fqdn, jobType: 'OneTime' })
-        await this.$emit('created')
+        await this.$axios.post('/api/CertificateJob', { fqdn: this.fqdn, wildcard: this.wildcard, jobType: 'OneTime' })
+        this.$emit('created')
         this.dialogVisible = false
       } catch (error) {
         this.$q.notify({

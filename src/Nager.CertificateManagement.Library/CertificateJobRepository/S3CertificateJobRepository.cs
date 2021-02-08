@@ -31,6 +31,7 @@ namespace Nager.CertificateManagement.Library.CertificateJobRepository
                 Id = Guid.NewGuid(),
                 Created = DateTime.Now,
                 Fqdn = addCertificateJob.Fqdn,
+                Wildcard = addCertificateJob.Wildcard,
                 JobType = addCertificateJob.JobType,
                 Status = CertificateJobStatus.Waiting
             };
