@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Nager.CertificateManagement.Library;
 using Nager.CertificateManagement.Library.CertificateJobRepository;
@@ -18,7 +17,7 @@ namespace Nager.CertificateManagement.WebApi.Services
     public class CertificateService : ICertificateService
     {
         private readonly ILogger<CertificateService> _logger;
-        private readonly IConfiguration _configuration;
+        private readonly LetsEncryptConfig _letsEncryptConfig;
         private readonly CertificateSigningInfo _certificateSigningInfo;
         private readonly ILoggerFactory _loggerFactory;
         private readonly IDomainParser _domainParser;
@@ -28,18 +27,18 @@ namespace Nager.CertificateManagement.WebApi.Services
 
         public CertificateService(
             ILogger<CertificateService> logger,
-            IConfiguration configuration,
-            IOptions<CertificateSigningInfo> certificateSigningInfo,
             ILoggerFactory loggerFactory,
+            IOptions<LetsEncryptConfig> letsEncryptConfig,
+            IOptions<CertificateSigningInfo> certificateSigningInfo,
             IDomainParser domainParser,
             ICertificateJobRepository certificateJobRepository,
             IEnumerable<IDnsManagementProvider> dnsManagementProviders,
             IObjectStorage objectStorage)
         {
             this._logger = logger;
-            this._configuration = configuration;
-            this._certificateSigningInfo = certificateSigningInfo.Value;
             this._loggerFactory = loggerFactory;
+            this._letsEncryptConfig = letsEncryptConfig.Value;
+            this._certificateSigningInfo = certificateSigningInfo.Value;
             this._domainParser = domainParser;
             this._certificateJobRepository = certificateJobRepository;
             this._dnsManagementProviders = dnsManagementProviders;
@@ -101,9 +100,8 @@ namespace Nager.CertificateManagement.WebApi.Services
                 logger,
                 dnsManagementProvider,
                 this._objectStorage,
-                this._configuration["email"],
-                this._certificateSigningInfo,
-                CertificateRequestMode.Test);
+                this._letsEncryptConfig,
+                this._certificateSigningInfo);
 
             await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.InProgress);
 

@@ -5,13 +5,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.S3" Version="3.5.7.10" />
+    <PackageReference Include="AWSSDK.S3" Version="3.5.8.4" />
     <PackageReference Include="Certes" Version="2.3.4" />
     <PackageReference Include="CloudFlare.Client" Version="4.0.1" />
     <PackageReference Include="DnsClient" Version="1.3.2" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="5.0.0" />
     <PackageReference Include="Nager.HetznerDns" Version="1.0.3" />
-    <PackageReference Include="Nager.PublicSuffix" Version="2.0.3" />
+    <PackageReference Include="Nager.PublicSuffix" Version="2.2.2" />
   </ItemGroup>
 
 </Project>

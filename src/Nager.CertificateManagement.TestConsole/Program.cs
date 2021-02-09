@@ -19,7 +19,11 @@ namespace Nager.CertificateManagement
             ILogger<S3ObjectStorage> loggerObjectStorage = loggerFactory.CreateLogger<S3ObjectStorage>();
             ILogger<CertificateProcessor> loggerCertificateProcessor = loggerFactory.CreateLogger<CertificateProcessor>();
 
-            var myAcmeEmailAddress = "employee@company.com";
+            var letsEncryptConfig = new LetsEncryptConfig
+            {
+                Email = "employee@company.com",
+                RequestMode = CertificateRequestMode.Test
+            };
 
             var certificateSigningInfo = new CertificateSigningInfo
             {
@@ -49,9 +53,8 @@ namespace Nager.CertificateManagement
                 loggerCertificateProcessor,
                 dnsManagementProvider,
                 objectStorage,
-                myAcmeEmailAddress,
-                certificateSigningInfo,
-                CertificateRequestMode.Test);
+                letsEncryptConfig,
+                certificateSigningInfo);
 
             certificateManagement.ProcessAsync(domains).GetAwaiter().GetResult();
         }

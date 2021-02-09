@@ -27,9 +27,8 @@ namespace Nager.CertificateManagement.Library
             ILogger<CertificateProcessor> logger,
             IDnsManagementProvider dnsManagementProvider,
             IObjectStorage objectStorage,
-            string acmeAccountEmail,
-            CertificateSigningInfo certificateSigningInfo,
-            CertificateRequestMode certificateRequestMode)
+            LetsEncryptConfig letsEncryptConfig,
+            CertificateSigningInfo certificateSigningInfo)
         {
             this._logger = logger;
             this._dnsManagementProvider = dnsManagementProvider;
@@ -37,7 +36,7 @@ namespace Nager.CertificateManagement.Library
 
             this._certificateSigningInfo = certificateSigningInfo;
 
-            if (certificateRequestMode == CertificateRequestMode.Production)
+            if (letsEncryptConfig.RequestMode == CertificateRequestMode.Production)
             {
                 this._acmeDirectoryUri = WellKnownServers.LetsEncryptV2;
                 this._acmeKeyFile = "acme-account-production.pem";
@@ -46,7 +45,7 @@ namespace Nager.CertificateManagement.Library
             if (!this._objectStorage.FileExistsAsync($"config/{this._acmeKeyFile}").GetAwaiter().GetResult())
             {
                 var acme = new AcmeContext(this._acmeDirectoryUri);
-                acme.NewAccount(acmeAccountEmail, true).GetAwaiter().GetResult();
+                acme.NewAccount(letsEncryptConfig.Email, true).GetAwaiter().GetResult();
                 var accountPemKey = acme.AccountKey.ToPem();
 
                 this._objectStorage.AddFileAsync($"config/{this._acmeKeyFile}", Encoding.UTF8.GetBytes(accountPemKey)).GetAwaiter().GetResult();

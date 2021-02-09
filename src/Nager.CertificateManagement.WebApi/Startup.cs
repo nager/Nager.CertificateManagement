@@ -26,6 +26,7 @@ namespace Nager.CertificateManagement.WebApi
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.Configure<LetsEncryptConfig>(Configuration.GetSection("LetsEncrypt"));
             services.Configure<CertificateSigningInfo>(Configuration.GetSection("CertificateSigningInfo"));
             services.Configure<S3Configuration>(Configuration.GetSection("ObjectStorage"));
 
