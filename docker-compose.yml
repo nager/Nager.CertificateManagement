@@ -2,7 +2,7 @@ version: "3.6"
 services:
 
   certificatemanagement:
-    image: "docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement:latest"
+    image: "nager/nager-certificatemanagement:latest"
     environment:
       LETSENCRYPT__EMAIL: 
       LETSENCRYPT__REQUESTMODE: TEST
