@@ -28,3 +28,11 @@ Update application
 ```bash
 docker-compose pull
 ```
+
+## Alternative and interesting projects on this topic
+
+| Language | Project |
+| ------------- | ------------- |
+| Python | [lexicon](https://github.com/AnalogJ/lexicon) |
+| .NET | [certify](https://github.com/webprofusion/certify) |
+| GO | [lego](https://github.com/go-acme/lego) |
