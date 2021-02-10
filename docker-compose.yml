@@ -1,60 +1,19 @@
 version: "3.6"
 services:
 
-  entrypoint:
-    image: nginx:1.19
-    command: |
-      bash -c 'bash -s <<EOF
-      cat > /etc/nginx/nginx.conf <<EON
-        daemon off;
-        user www-data;
-        events {
-          worker_connections 768;
-        }
-        http {
-          gzip on;
-          gzip_disable "msie6";
-          include /etc/nginx/mime.types;
-          client_max_body_size 16M;
-          server {
-            listen 80;
-            location / {
-              proxy_pass http://spa;
-              proxy_intercept_errors on;
-              error_page 404 = /;
-            }
-            location /api/ {
-              proxy_pass http://api;
-            }
-            location /swagger/ {
-              proxy_pass http://api;
-            }
-          }
-        }
-      EON
-      nginx
-      EOF'
-    ports:
-      - 80:80
-    depends_on:
-      - spa
-      - api
-
-  spa:
-    image: "docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.spa:latest"
-    depends_on:
-      - api
-
-  api:
-    image: "docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.api:latest"
+  certificatemanagement:
+    image: "docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement:latest"
     environment:
-      EMAIL: tino.hager@nager.at
-      DNSPROVIDER__HETZNER__APIKEY: Cqp7DDDMHNdMj8wRrbGr3vW40tbtTPPS
-      DNSPROVIDER__CLOUDFLARE__APIKEY: SqqDXMLpx-BKfE6oyYG3RvuePlgKngp1AL1SI69W
+      LETSENCRYPT__EMAIL: 
+      LETSENCRYPT__REQUESTMODE: TEST
+      DNSPROVIDER__HETZNER__APIKEY: 
+      DNSPROVIDER__CLOUDFLARE__APIKEY: 
       ASPNETCORE_ENVIRONMENT: Development
       OBJECTSTORAGE__ENDPOINT: http://minio:9000
       OBJECTSTORAGE__ACCESSKEY: AKIAIOSFODNN7EXAMPLE
       OBJECTSTORAGE__SECRETKEY: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    ports:
+      - 80:80
     depends_on:
       - minio
 
