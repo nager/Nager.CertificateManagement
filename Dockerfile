@@ -9,5 +9,5 @@ RUN apk add --no-cache icu-libs
 # Disable the invariant mode (set in base image)
 ENV DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=false
 
-COPY project .
-ENTRYPOINT ["dotnet", "Nager.CertificateManagement.WebApi.dll"]
+COPY project project
+ENTRYPOINT ["dotnet", "project/Nager.CertificateManagement.WebApi.dll"]

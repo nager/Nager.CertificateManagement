@@ -98,5 +98,5 @@ jobs:
     - name: Build the Docker image
       run: |
         echo "${{ secrets.GH_TOKEN }}" | docker login docker.pkg.github.com -u tinohager --password-stdin
-        docker build . --file WebApi.Dockerfile --tag docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.api:latest
-        docker push docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.api:latest
+        docker build . --file Dockerfile --tag docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement:latest
+        docker push docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement:latest
