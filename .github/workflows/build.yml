@@ -97,6 +97,6 @@ jobs:
         path: project/wwwroot
     - name: Build the Docker image
       run: |
-        echo "${{ secrets.GH_TOKEN }}" | docker login docker.pkg.github.com -u tinohager --password-stdin
-        docker build . --file Dockerfile --tag docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement:latest
-        docker push docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement:latest
+        echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USER }} --password-stdin
+        docker build . --file Dockerfile --tag nager/nager-certificatemanagement:latest
+        docker push nager/nager-certificatemanagement:latest
