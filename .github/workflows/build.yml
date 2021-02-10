@@ -17,49 +17,6 @@ jobs:
     env:
       working-directory: ./src/Nager.CertificateManagement.WebApi
 
-    steps:
-    - uses: actions/checkout@v2
-    - name: Setup .NET Core
-      uses: actions/setup-dotnet@v1
-      with:
-        dotnet-version: 5.0.100
-    - name: Install dependencies
-      run: dotnet restore
-      working-directory: ${{env.working-directory}}
-    - name: Build
-      run: dotnet build --no-restore --configuration Release
-      working-directory: ${{env.working-directory}}
-#    - name: Test
-#      run: dotnet test --no-restore --verbosity normal
-#      working-directory: ${{env.working-directory}}
-    - name: Publish
-      run: dotnet publish --no-restore --configuration Release --output publish
-      working-directory: ${{env.working-directory}}
-    - name: Upload artifact
-      uses: actions/upload-artifact@v1.0.0
-      with:
-        # Artifact name
-        name: api
-        # Directory containing files to upload
-        path: ${{env.working-directory}}/publish/
-
-  build-docker-api:
-
-    needs: [build-api]
-    runs-on: ubuntu-latest
-
-    steps:
-    - uses: actions/checkout@v2
-    - name: Download artifact
-      uses: actions/download-artifact@v1
-      with:
-        name: api
-    - name: Build the Docker image
-      run: |
-        echo "${{ secrets.GH_TOKEN }}" | docker login docker.pkg.github.com -u tinohager --password-stdin
-        docker build . --file WebApi.Dockerfile --tag docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.api:latest
-        docker push docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.api:latest
-
   build-spa:
 
     runs-on: ubuntu-latest
@@ -86,26 +43,61 @@ jobs:
       run: quasar build
       working-directory: ${{env.working-directory}}
     - name: Upload artifact
-      uses: actions/upload-artifact@v1.0.0
+      uses: actions/upload-artifact@v2
       with:
         # Artifact name
         name: spa
         # Directory containing files to upload
         path: ${{env.working-directory}}/dist/spa/
-        
-  build-docker-spa:
+        # Days before delete
+        retention-days: 1
 
-    needs: [build-spa]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 5.0.100
+    - name: Install dependencies
+      run: dotnet restore
+      working-directory: ${{env.working-directory}}
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      working-directory: ${{env.working-directory}}
+#    - name: Test
+#      run: dotnet test --no-restore --verbosity normal
+#      working-directory: ${{env.working-directory}}
+    - name: Publish
+      run: dotnet publish --no-restore --configuration Release --output publish
+      working-directory: ${{env.working-directory}}
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
+      with:
+        # Artifact name
+        name: api
+        # Directory containing files to upload
+        path: ${{env.working-directory}}/publish/
+        # Days before delete
+        retention-days: 1
+
+  build-docker-api:
+
+    needs: [build-api]
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v2
     - name: Download artifact
-      uses: actions/download-artifact@v1
+      uses: actions/download-artifact@v2
+      with:
+        name: api
+    - name: Download artifact
+      uses: actions/download-artifact@v2
       with:
         name: spa
+        path: wwwroot
     - name: Build the Docker image
       run: |
         echo "${{ secrets.GH_TOKEN }}" | docker login docker.pkg.github.com -u tinohager --password-stdin
-        docker build . --file Frontend.Dockerfile --tag docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.spa:latest
-        docker push docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.spa:latest
+        docker build . --file WebApi.Dockerfile --tag docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.api:latest
+        docker push docker.pkg.github.com/nager/nager.certificatemanagement/nager.certificatemanagement.api:latest
