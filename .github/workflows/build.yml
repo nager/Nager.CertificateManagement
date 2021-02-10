@@ -19,16 +19,12 @@ jobs:
     env:
       working-directory: ./src/Nager.CertificateManagement.Frontend
 
-    strategy:
-      matrix:
-        node-version: [12.x]
-
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v2
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: '14'
     - name: Clean slate
       run: npm ci
       working-directory: ${{env.working-directory}}
@@ -84,7 +80,7 @@ jobs:
 
   build-docker-api:
 
-    needs: [build-api]
+    needs: [build-api, build-spa]
     runs-on: ubuntu-latest
 
     steps:
