@@ -78,7 +78,7 @@ jobs:
         # Days before delete
         retention-days: 1
 
-  build-docker-api:
+  build-docker:
 
     needs: [build-api, build-spa]
     runs-on: ubuntu-latest
@@ -89,11 +89,12 @@ jobs:
       uses: actions/download-artifact@v2
       with:
         name: api
+        path: project
     - name: Download artifact
       uses: actions/download-artifact@v2
       with:
         name: spa
-        path: wwwroot
+        path: project/wwwroot
     - name: Build the Docker image
       run: |
         echo "${{ secrets.GH_TOKEN }}" | docker login docker.pkg.github.com -u tinohager --password-stdin
