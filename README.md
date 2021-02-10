@@ -19,6 +19,13 @@ The certificates can then be obtained by the individual servers from the S3 stor
 Update the configuration in the `docker-compose.yml` file before start the application.
 After the start the application is available under http://localhost
 
+```
+LETSENCRYPT__EMAIL: your@email.com
+LETSENCRYPT__REQUESTMODE: TEST OR PRODUCTION
+DNSPROVIDER__HETZNER__APIKEY: APIKEY OF THE PROVIDER
+DNSPROVIDER__CLOUDFLARE__APIKEY: APIKEY OF THE PROVIDER
+```
+
 ```bash
 docker-compose up
 ```
