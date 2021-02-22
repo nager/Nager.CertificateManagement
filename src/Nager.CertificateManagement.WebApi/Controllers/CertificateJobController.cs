@@ -44,7 +44,7 @@ namespace Nager.CertificateManagement.WebApi.Controllers
         public async Task<ActionResult<CertificateJob[]>> GetAllAsync(
             CancellationToken cancellationToken = default)
         {
-            var items = await this._certificateJobRepository.GetCertificateJobsAsync(cancellationToken);
+            var items = await this._certificateJobRepository.GetAllAsync(cancellationToken);
             return StatusCode(StatusCodes.Status200OK, items.OrderByDescending(o => o.Created));
         }
 
@@ -59,7 +59,7 @@ namespace Nager.CertificateManagement.WebApi.Controllers
                 return StatusCode(StatusCodes.Status400BadRequest);
             }
 
-            if (await this._certificateJobRepository.AddCertificateJobAsync(addCertificateJob, cancellationToken))
+            if (await this._certificateJobRepository.AddAsync(addCertificateJob, cancellationToken))
             {
                 _ = Task.Run(async () => await this._certificateService.CheckAsync());
 
@@ -75,7 +75,7 @@ namespace Nager.CertificateManagement.WebApi.Controllers
             [Required] [FromRoute] Guid id,
             CancellationToken cancellationToken = default)
         {
-            if (await this._certificateJobRepository.DeleteCertificateJobAsync(id, cancellationToken))
+            if (await this._certificateJobRepository.DeleteAsync(id, cancellationToken))
             {
                 return StatusCode(StatusCodes.Status200OK);
             }
@@ -89,7 +89,7 @@ namespace Nager.CertificateManagement.WebApi.Controllers
             [Required] [FromRoute] Guid id,
             CancellationToken cancellationToken = default)
         {
-            var item = await this._certificateJobRepository.GetCertificateJobAsync(id, cancellationToken);
+            var item = await this._certificateJobRepository.GetAsync(id, cancellationToken);
 
             var fileExtensions = new[] { "key", "pem", "pfx" };
 

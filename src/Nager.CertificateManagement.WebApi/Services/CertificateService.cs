@@ -47,7 +47,7 @@ namespace Nager.CertificateManagement.WebApi.Services
 
         public async Task CheckAsync(CancellationToken cancellationToken = default)
         {
-            var certificateJobs = await this._certificateJobRepository.GetCertificateJobsAsync(cancellationToken);
+            var certificateJobs = await this._certificateJobRepository.GetAllAsync(cancellationToken);
             var waitingCertificateJobs = certificateJobs.Where(o => o.Status != CertificateJobStatus.Done);
 
             this._logger.LogInformation("Run certificate service check");
@@ -61,7 +61,7 @@ namespace Nager.CertificateManagement.WebApi.Services
 
                     if (!await this._objectStorage.IsReadyAsync(cancellationToken))
                     {
-                        await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.Failure);
+                        await this._certificateJobRepository.UpdateStatusAsync(certificateJob.Id, CertificateJobStatus.Failure);
                         continue;
                     }
 
@@ -79,7 +79,7 @@ namespace Nager.CertificateManagement.WebApi.Services
 
                     if (!isProcessable)
                     {
-                        await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.NoDnsProvider);
+                        await this._certificateJobRepository.UpdateStatusAsync(certificateJob.Id, CertificateJobStatus.NoDnsProvider);
                     }
                 }
                 catch (Exception exception)
@@ -103,18 +103,18 @@ namespace Nager.CertificateManagement.WebApi.Services
                 this._letsEncryptConfig,
                 this._certificateSigningInfo);
 
-            await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.InProgress);
+            await this._certificateJobRepository.UpdateStatusAsync(certificateJob.Id, CertificateJobStatus.InProgress);
 
             var domain = this.GetDomain(certificateJob);
 
             var isSuccessful = await certificateProcessor.ProcessAsync(new string[] { domain }, cancellationToken);
             if (isSuccessful)
             {
-                await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.Done);
+                await this._certificateJobRepository.UpdateStatusAsync(certificateJob.Id, CertificateJobStatus.Done);
             }
             else
             {
-                await this._certificateJobRepository.UpdateCertificateJobStatusAsync(certificateJob.Id, CertificateJobStatus.Failure);
+                await this._certificateJobRepository.UpdateStatusAsync(certificateJob.Id, CertificateJobStatus.Failure);
             }
 
             return isSuccessful;

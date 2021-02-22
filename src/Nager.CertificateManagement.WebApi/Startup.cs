@@ -31,10 +31,10 @@ namespace Nager.CertificateManagement.WebApi
             services.Configure<S3Configuration>(Configuration.GetSection("ObjectStorage"));
 
             services.AddSingleton<IObjectStorage, S3ObjectStorage>();
+            //services.AddSingleton<IObjectStorage, InMemoryObjectStorage>();
 
             services.AddSingleton<IDomainParser>(new DomainParser(new WebTldRuleProvider()));
-            //services.AddSingleton<ICertificateJobRepository, MockCertificateJobRepository>();
-            services.AddSingleton<ICertificateJobRepository, S3CertificateJobRepository>();
+            services.AddSingleton<ICertificateJobRepository, ObjectStorageCertificateJobRepository>();
 
             this.AddDnsManagementProvider(services);
             services.AddTransient<ICertificateService, CertificateService>();

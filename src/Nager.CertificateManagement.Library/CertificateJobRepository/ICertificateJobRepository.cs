@@ -7,10 +7,10 @@ namespace Nager.CertificateManagement.Library.CertificateJobRepository
 {
     public interface ICertificateJobRepository
     {
-        Task<CertificateJob[]> GetCertificateJobsAsync(CancellationToken cancellationToken = default);
-        Task<CertificateJob> GetCertificateJobAsync(Guid id, CancellationToken cancellationToken = default);
-        Task<bool> AddCertificateJobAsync(AddCertificateJob addCertificateJob, CancellationToken cancellationToken = default);
-        Task<bool> UpdateCertificateJobStatusAsync(Guid id, CertificateJobStatus certificateJobStatus, CancellationToken cancellationToken = default);
-        Task<bool> DeleteCertificateJobAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<CertificateJob[]> GetAllAsync(CancellationToken cancellationToken = default);
+        Task<CertificateJob> GetAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> AddAsync(AddCertificateJob addCertificateJob, CancellationToken cancellationToken = default);
+        Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default);
+        Task<bool> UpdateStatusAsync(Guid id, CertificateJobStatus certificateJobStatus, CancellationToken cancellationToken = default);
     }
 }
