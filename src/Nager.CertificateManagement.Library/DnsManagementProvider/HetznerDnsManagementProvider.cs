@@ -19,6 +19,18 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
             this._dnsClient = new HetznerDnsClient(apiKey);
         }
 
+        private string GetAcmeDomain(DomainInfo domainInfo)
+        {
+            var acmeName = "_acme-challenge";
+
+            if (string.IsNullOrEmpty(domainInfo.SubDomain))
+            {
+                return acmeName;
+            }
+
+            return $"{acmeName}.{domainInfo.SubDomain}";
+        }
+
         public async Task<string[]> GetManagedDomainsAsync(CancellationToken cancellationToken = default)
         {
             var response = await this._dnsClient.GetZonesAsync(cancellationToken);
@@ -37,11 +49,13 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
                 return false;
             }
 
+            var acmeDomain = this.GetAcmeDomain(domainInfo);
+
             var createRecord = new CreateRecord
             {
                 ZoneId = zone.Id,
                 Type = DnsRecordType.TXT,
-                Name = $"_acme-challenge.{domainInfo.SubDomain}",
+                Name = acmeDomain,
                 Value = acmeToken,
                 Ttl = 0
             };
@@ -63,9 +77,11 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
                 return false;
             }
 
+            var acmeDomain = this.GetAcmeDomain(domainInfo);
+
             var recordResponse = await this._dnsClient.GetRecordsAsync(zone.Id, cancellationToken);
             var records = recordResponse.Records.Where(record => 
-                record.Name.Equals($"_acme-challenge.{domainInfo.SubDomain}", StringComparison.OrdinalIgnoreCase) && 
+                record.Name.Equals(acmeDomain, StringComparison.OrdinalIgnoreCase) && 
                 record.Type == DnsRecordType.TXT);
 
             if (records == null)

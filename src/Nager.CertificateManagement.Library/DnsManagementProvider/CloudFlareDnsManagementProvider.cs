@@ -20,6 +20,18 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
             this._dnsClient = new CloudFlareClient(apiKey);
         }
 
+        private string GetAcmeDomain(DomainInfo domainInfo)
+        {
+            var acmeName = "_acme-challenge";
+
+            if (string.IsNullOrEmpty(domainInfo.SubDomain))
+            {
+                return acmeName;
+            }
+
+            return $"{acmeName}.{domainInfo.SubDomain}";
+        }
+
         public async Task<string[]> GetManagedDomainsAsync(CancellationToken cancellationToken = default)
         {
             var response = await this._dnsClient.Zones.GetAsync(cancellationToken: cancellationToken);
@@ -43,9 +55,9 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
                 return false;
             }
 
-            var name = $"_acme-challenge.{domainInfo.SubDomain}";
+            var acmeDomain = this.GetAcmeDomain(domainInfo);
 
-            await this._dnsClient.Zones.DnsRecords.AddAsync(zone.Id, DnsRecordType.Txt, name, acmeToken, cancellationToken: cancellationToken);
+            await this._dnsClient.Zones.DnsRecords.AddAsync(zone.Id, DnsRecordType.Txt, acmeDomain, acmeToken, cancellationToken: cancellationToken);
 
             return true;
         }
@@ -67,9 +79,11 @@ namespace Nager.CertificateManagement.Library.DnsManagementProvider
                 return false;
             }
 
+            var acmeDomain = this.GetAcmeDomain(domainInfo);
+
             var recordResponse = await this._dnsClient.Zones.DnsRecords.GetAsync(zone.Id, cancellationToken: cancellationToken);
             var records = recordResponse.Result.Where(record => 
-                record.Name.StartsWith($"_acme-challenge.{domainInfo.SubDomain}", StringComparison.OrdinalIgnoreCase) && 
+                record.Name.StartsWith(acmeDomain, StringComparison.OrdinalIgnoreCase) && 
                 record.Type == DnsRecordType.Txt);
 
             if (records == null)
