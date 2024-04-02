@@ -1,3 +1,7 @@
+> [!CAUTION]
+> The project no longer works in its current state. As I no longer need it, it will be archived.
+
+
 # Nager.CertificateManagement
 
 Nager.CertificateManagement provides Lets Encrypt certificates for internal servers, switches, etc. or developers. The certificates are requested via the [DNS challenge](https://letsencrypt.org/docs/challenge-types/#dns-01-challenge), so that the internal devices do not need an external connection and you must not share your DNS Management credentials with everyone. The certificates can be requested via a web interface and are available for download there after generation. Standard certificates and wildcard certificates can be requested. The docker container is available via [dockerhub](https://hub.docker.com/r/nager/nager-certificatemanagement).
